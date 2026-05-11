@@ -1,0 +1,1654 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>SafeVoice Admin</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgcng9IjIyIiBmaWxsPSIjMEExNjI4Ii8+PHJlY3QgeD0iMzgiIHk9IjE1IiB3aWR0aD0iMjQiIGhlaWdodD0iNDIiIHJ4PSIxMiIgZmlsbD0iIzAwQzk2QSIvPjxwYXRoIGQ9Ik0yNSA1MiBRMjUgNzIgNTAgNzIgUTc1IDcyIDc1IDUyIiBzdHJva2U9IiMwMEM5NkEiIHN0cm9rZS13aWR0aD0iNSIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PGxpbmUgeDE9IjUwIiB5MT0iNzIiIHgyPSI1MCIgeTI9Ijg1IiBzdHJva2U9IiMwMEM5NkEiIHN0cm9rZS13aWR0aD0iNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PGxpbmUgeDE9IjM4IiB5MT0iODUiIHgyPSI2MiIgeTI9Ijg1IiBzdHJva2U9IiMwMEM5NkEiIHN0cm9rZS13aWR0aD0iNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PC9zdmc+">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700;800&display=swap');
+:root{--navy:#0A1628;--dark:#0D1E35;--card:#0F2540;--border:#1A3050;--green:#00C96A;--greendk:#00A855;--amber:#F59E0B;--red:#EF4444;--white:#E8F4FF;--muted:#5A8AAA;--ice:#C8E6FF;--gold:#FFD700;}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;}
+body{font-family:'Sarabun',sans-serif;background:var(--navy);color:var(--white);display:flex;flex-direction:column;}
+
+/* TOPBAR */
+.topbar{background:var(--dark);border-bottom:1px solid var(--border);padding:0 20px;display:flex;align-items:center;justify-content:space-between;height:54px;position:sticky;top:0;z-index:100;flex-shrink:0;}
+.logo{display:flex;align-items:center;gap:10px;}
+.logo-icon{width:30px;height:30px;background:linear-gradient(135deg,var(--green),var(--greendk));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;}
+.logo-name{font-size:15px;font-weight:700;}
+.logo-sub{font-size:9px;color:var(--muted);letter-spacing:2px;}
+.tb-right{display:flex;align-items:center;gap:8px;}
+.tb-user{font-size:12px;color:var(--muted);padding:0 10px;border-right:1px solid var(--border);}
+.tb-btn{background:transparent;border:1.5px solid var(--border);border-radius:8px;padding:6px 12px;color:var(--muted);font-family:'Sarabun',sans-serif;font-size:12px;cursor:pointer;transition:all .2s;}
+.tb-btn:hover{border-color:var(--green);color:var(--green);}
+.tb-btn.red{border-color:var(--red);color:var(--red);}
+
+/* LAYOUT */
+.layout{display:flex;flex:1;overflow:hidden;min-height:0;}
+
+/* SIDEBAR */
+.sidebar{width:190px;background:var(--dark);border-right:1px solid var(--border);padding:14px 10px;flex-shrink:0;overflow-y:auto;display:flex;flex-direction:column;gap:2px;}
+.sb-section{font-size:9px;color:var(--muted);letter-spacing:2px;font-weight:700;padding:10px 10px 5px;margin-top:4px;}
+.sb-section:first-child{padding-top:0;}
+.tab-btn{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:9px;cursor:pointer;border:none;background:transparent;color:var(--muted);font-family:'Sarabun',sans-serif;font-size:13px;font-weight:600;width:100%;text-align:left;transition:all .2s;position:relative;}
+.tab-btn:hover{background:var(--card);color:var(--white);}
+.tab-btn.active{background:var(--card);color:var(--green);border:1px solid var(--border);}
+.tab-btn.active::before{content:'';position:absolute;left:0;top:25%;bottom:25%;width:3px;background:var(--green);border-radius:0 2px 2px 0;}
+.tab-icon{font-size:15px;flex-shrink:0;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;}
+.badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:700;border-radius:10px;padding:1px 6px;min-width:18px;text-align:center;}
+.badge.amber{background:var(--amber);color:#1a0a00;}
+
+/* CONTENT */
+.content{flex:1;overflow-y:auto;padding:22px 24px;}
+.tab-panel{display:none;}
+.tab-panel.active{display:block;animation:fadeUp .3s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* SHARED */
+.panel-title{font-size:20px;font-weight:800;margin-bottom:3px;}
+.panel-sub{font-size:12px;color:var(--muted);margin-bottom:18px;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:13px;padding:16px 18px;margin-bottom:14px;}
+.section-label{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:2px;margin-bottom:10px;}
+
+/* STATS */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 15px;}
+.stat-num{font-size:26px;font-weight:900;line-height:1;}
+.stat-lbl{font-size:10px;color:var(--muted);letter-spacing:1px;margin-top:3px;}
+.stat-sub{font-size:10px;margin-top:2px;}
+
+/* REPORT CARDS */
+.rc{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 15px;margin-bottom:8px;}
+.rc.high{border-left:4px solid var(--red);}
+.rc.medium{border-left:4px solid var(--amber);}
+.rc.low{border-left:4px solid var(--green);}
+.rc-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;}
+.rc-id{font-size:10px;color:var(--muted);font-family:monospace;}
+.rc-badges{display:flex;gap:4px;}
+.rc-text{font-size:13px;line-height:1.55;margin-bottom:7px;}
+.rc-meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:11px;color:var(--muted);margin-bottom:9px;}
+.rc-cred{margin-left:auto;font-size:12px;font-weight:700;color:var(--gold);}
+.rc-actions{display:flex;gap:7px;}
+
+/* BUTTONS */
+.btn-v{flex:1;background:linear-gradient(135deg,var(--green),var(--greendk));border:none;border-radius:8px;padding:9px;color:#001a08;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:700;cursor:pointer;}
+.btn-r{flex:1;background:transparent;border:1.5px solid var(--red);border-radius:8px;padding:9px;color:var(--red);font-family:'Sarabun',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;}
+.btn-r:hover{background:var(--red);color:#fff;}
+.btn-d{background:transparent;border:1.5px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--muted);font-family:'Sarabun',sans-serif;font-size:12px;cursor:pointer;}
+.btn-prim{background:linear-gradient(135deg,var(--green),var(--greendk));border:none;border-radius:10px;padding:11px 20px;color:#001a08;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;cursor:pointer;}
+.btn-amber{background:linear-gradient(135deg,var(--amber),#d97706);border:none;border-radius:10px;padding:11px 20px;color:#1a0a00;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;cursor:pointer;}
+.btn-sm{background:transparent;border:1.5px solid var(--border);border-radius:8px;padding:5px 10px;color:var(--muted);font-family:'Sarabun',sans-serif;font-size:11px;cursor:pointer;transition:all .2s;}
+.btn-sm:hover{border-color:var(--green);color:var(--green);}
+.btn-sm.red{border-color:var(--red);color:var(--red);}
+
+/* DONE STATES */
+.done-v{background:#00c96a11;border:1px solid #00c96a33;color:var(--green);border-radius:8px;padding:8px 14px;font-size:12px;font-weight:600;text-align:center;margin-bottom:5px;}
+.done-r{background:#ef444411;border:1px solid #ef444433;color:var(--red);border-radius:8px;padding:8px 14px;font-size:12px;font-weight:600;text-align:center;margin-bottom:5px;}
+.reject-note{font-size:11px;color:var(--muted);background:var(--navy);border-radius:6px;padding:8px;}
+.reject-wrap{display:none;margin-top:9px;}
+.reject-wrap.show{display:block;}
+.reject-ta{width:100%;background:var(--navy);border:1px solid var(--red);border-radius:8px;padding:10px;color:var(--white);font-family:'Sarabun',sans-serif;font-size:13px;resize:none;min-height:60px;outline:none;margin-bottom:7px;}
+.rej-btns{display:flex;gap:7px;}
+.btn-cr{flex:1;background:var(--red);border:none;border-radius:8px;padding:9px;color:#fff;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:700;cursor:pointer;}
+.btn-cx{flex:1;background:transparent;border:1.5px solid var(--border);border-radius:8px;padding:9px;color:var(--muted);font-family:'Sarabun',sans-serif;font-size:13px;cursor:pointer;}
+
+/* BADGES */
+.rb{font-size:10px;font-weight:700;padding:2px 8px;border-radius:5px;}
+.rb-h{background:#ef444422;border:1px solid var(--red);color:var(--red);}
+.rb-m{background:#f59e0b22;border:1px solid var(--amber);color:var(--amber);}
+.rb-l{background:#00c96a22;border:1px solid var(--green);color:var(--green);}
+.rb-p{background:#f59e0b22;border:1px solid var(--amber);color:var(--amber);font-size:10px;padding:2px 8px;border-radius:5px;}
+.rb-ok{background:#00c96a22;border:1px solid var(--green);color:var(--green);font-size:10px;padding:2px 8px;border-radius:5px;}
+.rb-no{background:#ef444422;border:1px solid var(--red);color:var(--red);font-size:10px;padding:2px 8px;border-radius:5px;}
+
+/* FILTERS */
+.ftabs{display:flex;gap:6px;margin-bottom:11px;flex-wrap:wrap;}
+.ftab{padding:5px 13px;border-radius:20px;background:transparent;border:1.5px solid var(--border);color:var(--muted);font-family:'Sarabun',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;}
+.ftab.active{background:var(--amber);border-color:var(--amber);color:#1a0a00;}
+.search{width:100%;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--white);font-family:'Sarabun',sans-serif;font-size:13px;outline:none;margin-bottom:11px;}
+.search:focus{border-color:var(--amber);}
+
+/* TABLE */
+.tbl{width:100%;border-collapse:collapse;font-size:13px;}
+.tbl th{font-size:10px;color:var(--muted);letter-spacing:1px;padding:9px 12px;text-align:left;border-bottom:1px solid var(--border);}
+.tbl td{padding:12px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.tbl tr:last-child td{border-bottom:none;}
+.tbl tr:hover td{background:#ffffff04;}
+.cpill{display:inline-block;background:#00c96a22;border:1px solid #00c96a44;color:var(--green);border-radius:20px;padding:2px 10px;font-weight:700;font-size:12px;}
+
+/* FORM */
+.fg{margin-bottom:13px;}
+.fl{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px;margin-bottom:5px;display:block;}
+.fi{width:100%;background:var(--navy);border:1px solid var(--border);border-radius:10px;padding:11px 13px;color:var(--white);font-family:'Sarabun',sans-serif;font-size:14px;outline:none;transition:border-color .2s;}
+.fi:focus{border-color:var(--green);}
+.fs{width:100%;background:var(--navy);border:1px solid var(--border);border-radius:10px;padding:11px 13px;color:var(--white);font-family:'Sarabun',sans-serif;font-size:14px;outline:none;cursor:pointer;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+
+/* WARNINGS LIST */
+.wi{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:7px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px;}
+.wi.active{border-left:3px solid var(--red);}
+.wi.redeemed{border-left:3px solid var(--green);opacity:.8;}
+.wi-name{font-size:13px;font-weight:700;}
+.wi-issue{font-size:12px;color:var(--ice);margin-top:2px;}
+.wi-impact{font-size:11px;color:var(--muted);margin-top:2px;}
+
+/* HEINRICH */
+.htri{display:flex;flex-direction:column;align-items:center;gap:2px;margin:10px 0;}
+.hrow{display:flex;align-items:center;justify-content:center;padding:8px 16px;border-radius:4px;}
+.hrow.maj{background:#ef444433;border:1px solid #ef444455;min-width:130px;}
+.hrow.min{background:#f59e0b22;border:1px solid #f59e0b44;min-width:210px;}
+.hrow.nea{background:#00c96a22;border:1px solid #00c96a44;min-width:290px;}
+
+/* ROLES */
+.rtag{font-size:10px;font-weight:700;padding:2px 8px;border-radius:5px;}
+.r-emp{background:#5a8aaa22;border:1px solid #5a8aaa55;color:var(--muted);}
+.r-so{background:#f59e0b22;border:1px solid #f59e0b55;color:var(--amber);}
+.r-mgr{background:#ef444422;border:1px solid #ef444455;color:var(--red);}
+
+/* BONUS BUTTON */
+.btn-bonus{width:100%;background:transparent;border:1.5px solid #ffd70066;border-radius:8px;padding:8px;color:var(--gold);font-family:'Sarabun',sans-serif;font-size:12px;font-weight:700;cursor:pointer;margin-top:5px;}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--dark);border:1px solid var(--green);border-radius:12px;padding:12px 20px;font-size:13px;color:var(--green);font-weight:600;opacity:0;transition:all .3s;z-index:500;white-space:nowrap;pointer-events:none;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.toast.red{border-color:var(--red);color:var(--red);}
+.toast.amber{border-color:var(--amber);color:var(--amber);}
+
+/* MODAL */
+.modal-ov{position:fixed;inset:0;background:#000000aa;display:flex;align-items:flex-end;justify-content:center;z-index:300;opacity:0;pointer-events:none;transition:opacity .25s;}
+.modal-ov.show{opacity:1;pointer-events:all;}
+.modal-sh{background:var(--dark);border:1px solid var(--border);border-radius:24px 24px 0 0;padding:24px 22px 36px;width:100%;max-width:520px;transform:translateY(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);}
+.modal-ov.show .modal-sh{transform:translateY(0);}
+.mhandle{width:40px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 18px;}
+.mtitle{font-size:16px;font-weight:700;margin-bottom:4px;}
+.msub{font-size:12px;color:var(--muted);margin-bottom:16px;}
+
+/* BOTTOM NAV (mobile only) */
+.bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--dark);border-top:1px solid var(--border);z-index:200;padding:6px 0 10px;}
+.bottom-nav-inner{display:flex;justify-content:space-around;}
+.bn-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;cursor:pointer;color:#3A5570;font-family:'Sarabun',sans-serif;font-size:9px;letter-spacing:.3px;padding:4px 0;transition:color .2s;}
+.bn-btn.active{color:var(--green);}
+.bn-btn svg{width:20px;height:20px;}
+
+/* MORE DRAWER */
+.more-ov{position:fixed;inset:0;background:#000000aa;z-index:300;opacity:0;pointer-events:none;transition:opacity .25s;}
+.more-ov.show{opacity:1;pointer-events:all;}
+.more-sh{position:absolute;bottom:0;left:0;right:0;background:var(--dark);border:1px solid var(--border);border-radius:24px 24px 0 0;padding:16px 20px 32px;transform:translateY(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);}
+.more-ov.show .more-sh{transform:translateY(0);}
+.more-item{display:block;width:100%;text-align:left;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px;color:var(--white);font-family:'Sarabun',sans-serif;font-size:15px;font-weight:600;cursor:pointer;margin-bottom:8px;}
+
+@media(max-width:700px){
+  .sidebar{display:none;}
+  .stats-row{grid-template-columns:repeat(2,1fr);}
+  .form-grid{grid-template-columns:1fr;}
+  .bottom-nav{display:block;}
+  .content{padding:16px 14px 80px;}
+  .btn-v,.btn-r{padding:13px;font-size:14px;}
+}
+
+/* ══ ANALYTICS ══ */
+.an-grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+.an-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px 18px;}
+.an-title{font-size:11px;font-weight:700;color:var(--amber);letter-spacing:1.5px;margin-bottom:12px;}
+.an-period{display:flex;gap:6px;margin-bottom:16px;}
+.an-ptab{padding:6px 14px;border-radius:20px;background:transparent;border:1.5px solid var(--border);color:var(--muted);font-family:'Sarabun',sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:all .2s;}
+.an-ptab.active{background:var(--amber);border-color:var(--amber);color:#1a0a00;}
+.trend-wrap{position:relative;}
+.trend-svg{width:100%;height:130px;display:block;overflow:visible;}
+.trend-labels{display:flex;justify-content:space-between;margin-top:3px;}
+.trend-lbl{font-size:9px;color:var(--muted);flex:1;text-align:center;}
+.an-tooltip{position:fixed;background:var(--dark);border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:11px;color:var(--white);pointer-events:none;opacity:0;transition:opacity .15s;z-index:200;}
+.donut-wrap{display:flex;align-items:center;gap:14px;}
+.donut-svg{width:100px;height:100px;flex-shrink:0;}
+.hc0{background:#1a2435;} .hc1{background:#0a2e1a;} .hc2{background:#0d4025;}
+.hc3{background:#1a5c2e;} .hc4{background:#f59e0b22;} .hc5{background:#f59e0b55;}
+.hc6{background:#ef444422;} .hc7{background:#ef444455;} .hc8{background:#ef4444aa;}
+.rt-row{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);font-size:11px;}
+.rt-row:last-child{border-bottom:none;}
+.rt-lbl{flex:1;color:var(--ice);}
+.rt-bar-bg{width:90px;height:5px;background:var(--border);border-radius:3px;overflow:hidden;}
+.rt-bar-fill{height:100%;border-radius:3px;transition:width 1s ease;}
+.rt-val{min-width:44px;text-align:right;font-weight:700;}
+@media(max-width:700px){.an-grid2{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="logo">
+    <div class="logo-icon">🎙</div>
+    <div>
+      <div class="logo-name">SafeVoice Admin</div>
+      <div class="logo-sub">SAFETY OFFICER PANEL</div>
+    </div>
+  </div>
+  <div class="tb-right">
+    <button class="tb-btn red" onclick="doLogout()">ออกจากระบบ</button>
+  </div>
+</div>
+
+<!-- LAYOUT -->
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sb-section">OVERVIEW</div>
+    <button class="tab-btn active" id="t-dash"    onclick="go('dash')">  <span class="tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span>Dashboard</button>
+    <button class="tab-btn"        id="t-verify"  onclick="go('verify')"><span class="tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg></span>ยืนยันรายงาน<span class="badge" id="bdg-p" style="display:none">0</span></button>
+
+    <div class="sb-section">พนักงาน</div>
+    <button class="tab-btn" id="t-credits"  onclick="go('credits')"> <span class="tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></span>Credits พนักงาน</button>
+    <button class="tab-btn" id="t-warnings" onclick="go('warnings')"><span class="tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>เพิ่มใบเตือน</button>
+
+    <div class="sb-section">ระบบ</div>
+    <button class="tab-btn" id="t-users" onclick="go('users')"><span class="tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>จัดการสิทธิ์</button>
+    <button class="tab-btn" id="t-settings" onclick="go('settings')"><span class="tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>ตั้งค่าระบบ</button>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div class="tab-panel active" id="p-dash">
+      <div class="panel-title">Dashboard</div>
+      <div class="panel-sub">ภาพรวมความปลอดภัย กฟจ.ปัตตานี</div>
+      <div class="stats-row" id="db-stats"></div>
+      <div class="card">
+        <div class="section-label">📊 Heinrich's Triangle</div>
+        <div class="htri">
+          <div class="hrow maj"><span style="flex:1;text-align:center;font-size:12px;font-weight:700;color:var(--red)">Major Accident</span><span style="font-size:20px;font-weight:900;color:var(--red)" id="h-maj">0</span></div>
+          <div class="hrow min"><span style="flex:1;text-align:center;font-size:12px;font-weight:700;color:var(--amber)">Minor Incident</span><span style="font-size:20px;font-weight:900;color:var(--amber)" id="h-min">0</span></div>
+          <div class="hrow nea"><span style="flex:1;text-align:center;font-size:12px;font-weight:700;color:var(--green)">Near Miss Reports</span><span style="font-size:20px;font-weight:900;color:var(--green)" id="h-nea">0</span></div>
+        </div>
+        <div style="font-size:11px;color:var(--muted);text-align:center;margin-top:8px;">ทุก 300 Near Miss ที่ถูกแก้ไข = ป้องกันอุบัติเหตุใหญ่ 1 ครั้ง</div>
+      </div>
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <div class="section-label" style="margin:0">⏳ High Risk รอตรวจสอบด่วน</div>
+          <button class="btn-sm" onclick="go('verify')">ดูทั้งหมด →</button>
+        </div>
+        <div id="db-quick"></div>
+      </div>
+
+      <!-- ANALYTICS (รวมใน Dashboard) -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;margin-top:8px;">
+        <div style="font-size:12px;font-weight:700;color:var(--amber);letter-spacing:1px;">📊 Analytics</div>
+        <div class="an-period" style="margin:0;">
+          <button class="an-ptab active" onclick="anSetPeriod(3,this)">3 เดือน</button>
+          <button class="an-ptab" onclick="anSetPeriod(6,this)">6 เดือน</button>
+          <button class="an-ptab" onclick="anSetPeriod(12,this)">ปีนี้</button>
+        </div>
+      </div>
+
+      <div class="an-grid2">
+        <div class="an-card">
+          <div class="an-title">📈 Near Miss ต่อเดือน</div>
+          <div class="trend-wrap">
+            <svg class="trend-svg" id="an-trend-svg" viewBox="0 0 360 130" preserveAspectRatio="none"></svg>
+            <div class="trend-labels" id="an-trend-labels"></div>
+          </div>
+        </div>
+        <div class="an-card">
+          <div class="an-title">🏆 Top 3 ความเสี่ยงที่พบบ่อย</div>
+          <div id="an-top-risk"></div>
+        </div>
+      </div>
+
+      <div class="an-grid2">
+        <div class="an-card">
+          <div class="an-title">🗂 สัดส่วนตามประเภท</div>
+          <div class="donut-wrap">
+            <svg class="donut-svg" id="an-donut" viewBox="0 0 100 100"></svg>
+            <div id="an-donut-legend" style="flex:1;"></div>
+          </div>
+        </div>
+        <div class="an-card">
+          <div class="an-title">⏱ เวลาตอบสนอง จป. (ชม.)</div>
+          <div id="an-resp-list"></div>
+          <div style="display:flex;gap:8px;margin-top:12px;padding-top:10px;border-top:1px solid var(--border);">
+            <div style="flex:1;background:var(--navy);border-radius:8px;padding:8px;text-align:center;">
+              <div style="font-size:18px;font-weight:900;color:var(--green);" id="an-avg-resp">—</div>
+              <div style="font-size:9px;color:var(--muted);">เฉลี่ย ชม.</div>
+            </div>
+            <div style="flex:1;background:var(--navy);border-radius:8px;padding:8px;text-align:center;">
+              <div style="font-size:18px;font-weight:900;color:var(--amber);" id="an-sla">—</div>
+              <div style="font-size:9px;color:var(--muted);">ผ่าน SLA 48ชม.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="an-card" style="margin-bottom:14px;">
+        <div class="an-title">🗺 Heatmap — Near Miss แยกตามพื้นที่ × ประเภท</div>
+        <div style="font-size:10px;color:var(--muted);margin-bottom:10px;">ยิ่งสีเข้ม = พบบ่อย</div>
+        <div id="an-heatmap" style="overflow-x:auto;"></div>
+        <div style="display:flex;align-items:center;gap:5px;margin-top:10px;">
+          <span style="font-size:9px;color:var(--muted);">น้อย</span>
+          <div style="width:16px;height:10px;border-radius:2px;" class="hc0"></div>
+          <div style="width:16px;height:10px;border-radius:2px;" class="hc2"></div>
+          <div style="width:16px;height:10px;border-radius:2px;" class="hc4"></div>
+          <div style="width:16px;height:10px;border-radius:2px;" class="hc6"></div>
+          <div style="width:16px;height:10px;border-radius:2px;" class="hc8"></div>
+          <span style="font-size:9px;color:var(--muted);">มาก</span>
+        </div>
+      </div>
+
+      <div class="an-card" style="margin-bottom:14px;">
+        <div class="an-title">📍 จุดเสี่ยงสูง (Hotspot)</div>
+        <div id="an-hotspot"></div>
+      </div>
+    </div>
+
+    <!-- VERIFY -->
+    <div class="tab-panel" id="p-verify">
+      <div class="panel-title">ยืนยันรายงาน Near Miss</div>
+      <div class="panel-sub">ตรวจสอบและให้ Safety Credits แก่พนักงาน</div>
+      <div class="ftabs">
+        <button class="ftab active" onclick="vf('pending',this)">⏳ รอตรวจสอบ</button>
+        <button class="ftab" onclick="vf('all',this)">ทั้งหมด</button>
+        <button class="ftab" onclick="vf('high',this)">⚡ High</button>
+        <button class="ftab" onclick="vf('verified',this)">✓ ยืนยัน</button>
+        <button class="ftab" onclick="vf('rejected',this)">✗ ปฏิเสธ</button>
+      </div>
+      <input class="search" id="v-q" placeholder="ค้นหาชื่อพนักงาน หรือเนื้อหา..." oninput="renderVerify()">
+      <div id="v-list"></div>
+    </div>
+
+    <!-- CREDITS -->
+    <div class="tab-panel" id="p-credits">
+      <div class="panel-title">Safety Credits พนักงาน</div>
+      <div class="panel-sub">คะแนนสะสม ใบเตือน และประวัติ</div>
+      <input class="search" id="c-q" placeholder="ค้นหาชื่อหรือรหัสพนักงาน..." oninput="renderCredits()">
+      <div class="card" style="padding:0;overflow:hidden;">
+        <table class="tbl">
+          <thead><tr><th>พนักงาน</th><th>Credits</th><th>รายงาน</th><th>ใบเตือน (active)</th><th>Redeems</th></tr></thead>
+          <tbody id="c-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- WARNINGS -->
+    <div class="tab-panel" id="p-warnings">
+      <div class="panel-title">เพิ่มใบเตือนพนักงาน</div>
+      <div class="panel-sub">ใบเตือนจะแสดงในหน้า Credits ของพนักงานทันที</div>
+      <div class="card">
+        <div class="section-label">➕ ออกใบเตือนใหม่</div>
+        <div class="fg">
+          <label class="fl">พนักงาน</label>
+          <div style="position:relative;">
+            <input class="fi" id="w-emp-search"
+              placeholder="พิมพ์ชื่อหรือรหัสพนักงาน..."
+              oninput="wFilterEmp(this.value)"
+              autocomplete="off"
+              style="padding-right:36px;">
+            <input type="hidden" id="w-emp">
+            <div id="w-emp-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--card);border:1px solid var(--border);border-radius:10px;max-height:220px;overflow-y:auto;z-index:200;margin-top:4px;box-shadow:0 8px 24px #00000066;"></div>
+          </div>
+          <div id="w-emp-selected" style="display:none;margin-top:6px;background:var(--navy);border:1px solid #00c96a44;border-radius:10px;padding:8px 12px;align-items:center;justify-content:space-between;gap:10px;">
+            <div id="w-emp-selected-name" style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;"></div>
+            <button onclick="wClearEmp()" style="background:rgba(255,255,255,0.06);border:1px solid var(--border);border-radius:6px;color:var(--muted);cursor:pointer;font-size:15px;line-height:1;width:26px;height:26px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">×</button>
+          </div>
+        </div>
+        <div class="fg">
+          <label class="fl">เรื่องใบเตือน</label>
+          <input class="fi" id="w-issue" placeholder="เช่น ไม่สวมหมวกนิรภัยระหว่างปฏิบัติงาน">
+        </div>
+        <div class="fg">
+          <label class="fl">ครั้งที่</label>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <input class="fi" id="w-cnt" type="number" min="1" max="10" value="1" style="width:90px;text-align:center;font-size:20px;font-weight:700;">
+            <span style="font-size:12px;color:var(--muted);">ใบเตือนครั้งที่นี้ของพนักงาน</span>
+          </div>
+        </div>
+        <button class="btn-amber" onclick="submitWarning()">⚠ ออกใบเตือน</button>
+      </div>
+      <div class="section-label">ประวัติใบเตือนทั้งหมด</div>
+      <div id="w-hist"></div>
+    </div>
+
+    <!-- USERS -->
+    <div class="tab-panel" id="p-users">
+      <div class="panel-title">จัดการสิทธิ์และบัญชี</div>
+      <div class="panel-sub">เพิ่มพนักงาน · ปรับ role · รีเซ็ตรหัสผ่าน</div>
+      <div class="card">
+        <div class="section-label">➕ เพิ่มพนักงานใหม่</div>
+        <div class="form-grid">
+          <div class="fg" style="margin:0"><label class="fl">รหัสพนักงาน</label><input class="fi" id="u-code" placeholder=""></div>
+          <div class="fg" style="margin:0"><label class="fl">ชื่อ-นามสกุล</label><input class="fi" id="u-name" placeholder=""></div>
+          <div class="fg" style="margin:0"><label class="fl">แผนก</label><input class="fi" id="u-dept" placeholder=""></div>
+          <div class="fg" style="margin:0"><label class="fl">สิทธิ์</label>
+            <select class="fs" id="u-role">
+              <option value="employee">พนักงาน</option>
+              <option value="safety_officer">จป. / Safety Officer</option>
+              <option value="manager">ผู้จัดการ</option>
+            </select>
+          </div>
+          <div class="fg" style="margin:0"><label class="fl">รหัสผ่านเริ่มต้น</label><input class="fi" id="u-pw" type="text" value="1234" placeholder="1234"></div>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">⚠️ ข้อมูลจะถูกบันทึกเข้า Supabase ทันที — แจ้งรหัสผ่านให้พนักงานเปลี่ยนเมื่อ login ครั้งแรก</div>
+        <button class="btn-prim" onclick="addUser()">➕ เพิ่มพนักงาน</button>
+      </div>
+      <div class="section-label">รายชื่อพนักงานในระบบ</div>
+      <div class="card" style="padding:0;overflow:hidden;">
+        <table class="tbl">
+          <thead><tr><th>รหัส</th><th>ชื่อ</th><th>แผนก</th><th>สิทธิ์</th><th>จัดการ</th></tr></thead>
+          <tbody id="u-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="tab-panel" id="p-settings">
+      <div class="panel-title">ตั้งค่าระบบ</div>
+      <div class="panel-sub">จัดการ API Keys สำหรับการวิเคราะห์ด้วย AI</div>
+
+      <!-- สถานะ Key -->
+      <div id="st-api-status" style="margin-bottom:16px;"></div>
+
+      <!-- Claude API Key -->
+      <div class="card">
+        <div class="section-label">🤖 CLAUDE AI — วิเคราะห์ Near Miss</div>
+        <div class="fg">
+          <label class="fl">Claude API Key</label>
+          <div style="position:relative;">
+            <input class="fi" id="st-claude-key" type="password"
+              placeholder="sk-ant-api03-..."
+              style="padding-right:44px;"
+              oninput="stCheckDirty()">
+            <button onclick="stToggleShow('st-claude-key',this)"
+              style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--muted);font-size:16px;padding:4px;"
+              title="แสดง/ซ่อน key">👁</button>
+          </div>
+          <div style="font-size:11px;color:var(--muted);margin-top:5px;">ใช้สำหรับวิเคราะห์ความเสี่ยงและจัดหมวดหมู่รายงาน Near Miss อัตโนมัติ</div>
+        </div>
+        <div id="st-claude-status" style="font-size:12px;margin-top:2px;margin-bottom:10px;"></div>
+        <button class="btn-sm" onclick="stTestClaude()" id="st-test-claude-btn">🧪 ทดสอบ Key</button>
+      </div>
+
+      <!-- Save button -->
+      <div style="display:flex;gap:10px;align-items:center;">
+        <button class="btn-prim" onclick="stSave()" id="st-save-btn">💾 บันทึกการตั้งค่า</button>
+        <button class="btn-d" onclick="stClear()">🗑 ล้าง Keys ทั้งหมด</button>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-top:10px;">
+        🔒 API Keys ถูกเก็บใน localStorage ของเบราว์เซอร์นี้เท่านั้น ไม่ได้ส่งไปยัง server ใด
+      </div>
+    </div>
+
+    </div>
+</div>
+
+<!-- BOTTOM NAV (mobile) -->
+<div class="bottom-nav">
+  <div class="bottom-nav-inner">
+    <button class="bn-btn active" id="bn-dash" onclick="go('dash')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Dashboard
+    </button>
+    <button class="bn-btn" id="bn-verify" onclick="go('verify')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
+      ยืนยันรายงาน
+    </button>
+    <button class="bn-btn" id="bn-more" onclick="toggleMoreMenu()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="5" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="19" cy="12" r="1.5" fill="currentColor"/></svg>
+      เพิ่มเติม
+    </button>
+  </div>
+</div>
+
+<!-- MORE MENU DRAWER (mobile) -->
+<div class="more-ov" id="more-ov" onclick="if(event.target===this)toggleMoreMenu()">
+  <div class="more-sh" id="more-sh">
+    <div class="mhandle"></div>
+    <div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:2px;margin-bottom:12px;">เมนูเพิ่มเติม</div>
+    <button class="more-item" onclick="go('credits');toggleMoreMenu()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" style="vertical-align:middle;margin-right:8px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>Credits พนักงาน</button>
+    <button class="more-item" onclick="go('warnings');toggleMoreMenu()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;vertical-align:middle;margin-right:8px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>เพิ่มใบเตือน</button>
+    <button class="more-item" onclick="go('users');toggleMoreMenu()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" style="vertical-align:middle;margin-right:8px"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>จัดการสิทธิ์</button>
+    <button class="more-item" onclick="go('settings');toggleMoreMenu()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" style="vertical-align:middle;margin-right:8px"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>ตั้งค่าระบบ</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- RESET MODAL -->
+<div class="modal-ov" id="m-reset" onclick="if(event.target===this)closeModal()">
+  <div class="modal-sh">
+    <div class="mhandle"></div>
+    <div class="mtitle">🔑 รีเซ็ตรหัสผ่าน</div>
+    <div class="msub" id="m-reset-sub">—</div>
+    <div class="fg"><label class="fl">รหัสผ่านใหม่</label><input class="fi" id="m-pw" type="text" value="1234"></div>
+    <div style="display:flex;gap:10px;margin-top:4px;">
+      <button onclick="confirmReset()" style="flex:2;background:linear-gradient(135deg,var(--green),var(--greendk));border:none;border-radius:12px;padding:13px;color:#001a08;font-family:'Sarabun',sans-serif;font-size:15px;font-weight:700;cursor:pointer;">✅ ยืนยัน</button>
+      <button onclick="closeModal()" style="flex:1;background:transparent;border:1.5px solid var(--border);border-radius:12px;padding:13px;color:var(--muted);font-family:'Sarabun',sans-serif;font-size:14px;cursor:pointer;">ยกเลิก</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══ DATA ══
+// ══════════════════════════════════════════════════════════════════
+//  DEMO DATA — พนักงานตัวอย่าง 2 คน สำหรับสาธิตระบบ
+
+const DB = {
+  reports: [],
+  employees:[
+    {id:'278629',name:'นางนฤมล เจริญพานิช',dept:'กฟจ.ปัตตานี',role:'employee',credits:120,redeems:1},
+    {id:'303644',name:'นายสาโรจน์ แนวบรรทัด',dept:'กฟจ.ปัตตานี',role:'employee',credits:300,redeems:0},
+    {id:'416146',name:'นายอนัน รัตนวรรณ',dept:'กฟจ.ปัตตานี',role:'safety_officer',credits:0,redeems:0},
+    {id:'449602',name:'นายสัญญา ชื่นบาน',dept:'กฟจ.ปัตตานี',role:'employee',credits:120,redeems:0},
+    {id:'427498',name:'นายชินวุธ โรจนปฏิภาณ',dept:'กฟจ.ปัตตานี',role:'employee',credits:300,redeems:0},
+    {id:'459102',name:'นายกวี แก้วศรี',dept:'กฟจ.ปัตตานี',role:'safety_officer',credits:0,redeems:0},
+    {id:'470776',name:'นายอำนาจ มีขำ',dept:'กฟจ.ปัตตานี',role:'employee',credits:300,redeems:0},
+    {id:'504833',name:'นายวิริยะ รุ่งเรือง',dept:'กฟจ.ปัตตานี',role:'safety_officer',credits:0,redeems:0},
+    {id:'499498',name:'นายวิชาญ รักษ์ด้วง',dept:'แผนกบริการลูกค้า',role:'employee',credits:0,redeems:0},
+    {id:'499838',name:'นายศัลย์ จงไกรจักร์',dept:'แผนกบริการลูกค้า',role:'employee',credits:0,redeems:0},
+    {id:'509082',name:'นายหฤษฏ์ จาระวรรณ',dept:'แผนกบริการลูกค้า',role:'employee',credits:0,redeems:0},
+    {id:'510371',name:'นายเอนกพงศ์ ยศแสน',dept:'แผนกบริการลูกค้า',role:'employee',credits:0,redeems:0},
+    {id:'514278',name:'นายวิลดาล จะปะกียา',dept:'แผนกบริการลูกค้า',role:'employee',credits:0,redeems:0},
+    {id:'492964',name:'นายฟิทตรี มามะ',dept:'แผนกมิเตอร์',role:'employee',credits:0,redeems:0},
+    {id:'499830',name:'นายกฤษฎา เจะมะ',dept:'แผนกมิเตอร์',role:'employee',credits:0,redeems:0},
+    {id:'501860',name:'นายณัฐพงศ์ แก้วนาโอ',dept:'แผนกมิเตอร์',role:'employee',credits:0,redeems:0},
+    {id:'503079',name:'ว่าที่ร้อยตรี ภานุวัฒน์ สุขสวัสดิ์',dept:'แผนกมิเตอร์',role:'employee',credits:0,redeems:0},
+    {id:'504844',name:'นายอาลียะห์ เจะและ',dept:'แผนกมิเตอร์',role:'employee',credits:0,redeems:0},
+    {id:'494071',name:'นายธีรพงษ์ ภูละ',dept:'แผนกปฏิบัติการ',role:'employee',credits:0,redeems:0},
+    {id:'494194',name:'นายฐภณรัฏฐ์ ชูเลขา',dept:'แผนกปฏิบัติการ',role:'employee',credits:0,redeems:0},
+    {id:'496786',name:'นายนิอิลเลียส มูสตอปาร์',dept:'แผนกปฏิบัติการ',role:'employee',credits:0,redeems:0},
+    {id:'498594',name:'นายธนวุฒิ พุ่มมาก',dept:'แผนกปฏิบัติการ',role:'employee',credits:0,redeems:0},
+    {id:'502393',name:'นายจัตุรงค์ แซ่ฉั่ว',dept:'แผนกปฏิบัติการ',role:'employee',credits:0,redeems:0},
+    {id:'502394',name:'นายพชร สุขแพง',dept:'แผนกปฏิบัติการ',role:'employee',credits:0,redeems:0},
+    {id:'503670',name:'นายธีธัช มณีจันทร์',dept:'แผนกปฏิบัติการ',role:'employee',credits:0,redeems:0},
+    {id:'503672',name:'นายฉัตรชัย พรหมลำดา',dept:'แผนกปฏิบัติการ',role:'employee',credits:0,redeems:0},
+    {id:'503714',name:'นายกิตติโชติ โรจนกรินทร์',dept:'แผนกปฏิบัติการ',role:'employee',credits:0,redeems:0},
+    {id:'505162',name:'นายนราธิป อาแว',dept:'แผนกปฏิบัติการ',role:'employee',credits:0,redeems:0},
+    {id:'507701',name:'นายนิรันดร์ เพ็งรักษ์',dept:'แผนกปฏิบัติการ',role:'employee',credits:0,redeems:0},
+    {id:'510167',name:'นายพิพรรธน์พงศ์ พุ่มโพธิ์',dept:'แผนกปฏิบัติการ',role:'employee',credits:0,redeems:0},
+    {id:'510461',name:'นายพลวัตน์ ภัทรธนจินดา',dept:'แผนกปฏิบัติการ',role:'employee',credits:0,redeems:0},
+    {id:'510981',name:'นายนิรีดูวัน ดือราแม',dept:'แผนกปฏิบัติการ',role:'employee',credits:0,redeems:0},
+    {id:'512811',name:'นายอับดุลฮาฟิซ โต๊ะเก็ง',dept:'แผนกปฏิบัติการ',role:'employee',credits:0,redeems:0},
+    {id:'513443',name:'นายก้องเกียรติ ทัพเมฆา',dept:'แผนกปฏิบัติการ',role:'employee',credits:0,redeems:0},
+    {id:'514036',name:'นายลุตฟี เจะดือเระ',dept:'แผนกปฏิบัติการ',role:'employee',credits:0,redeems:0},
+    {id:'515038',name:'นายธนพนธ์ ประดิษฐ์พงษ์',dept:'แผนกปฏิบัติการ',role:'employee',credits:0,redeems:0},
+    {id:'501869',name:'นายอับดุลบารี สะแม',dept:'แผนกก่อสร้าง',role:'employee',credits:0,redeems:0},
+    {id:'502398',name:'นายรวมยศ บริเพ็ชร์',dept:'แผนกก่อสร้าง',role:'employee',credits:0,redeems:0},
+    {id:'503059',name:'นายธนันพงศ์ ทองธรรมชาติ',dept:'แผนกก่อสร้าง',role:'employee',credits:0,redeems:0},
+    {id:'505621',name:'นายคำรน ศรีนอก',dept:'แผนกก่อสร้าง',role:'employee',credits:0,redeems:0},
+    {id:'506964',name:'นายสิทธิมนต์ เขียวเข้ม',dept:'แผนกก่อสร้าง',role:'employee',credits:0,redeems:0},
+    {id:'496296',name:'น.ส.ณภัทรทิตา ภูริวิทย์',dept:'แผนกบัญชีรายได้',role:'employee',credits:0,redeems:0},
+    {id:'501872',name:'น.ส.นริศรา พรสุวรรณ',dept:'แผนกบัญชีรายได้',role:'employee',credits:0,redeems:0},
+    {id:'512386',name:'น.ส.ฮัพเซาะ สารียอ',dept:'แผนกบัญชีรายได้',role:'employee',credits:0,redeems:0},
+    {id:'513304',name:'น.ส.จันทิมา ช่วยบุญชู',dept:'แผนกบัญชีรายได้',role:'employee',credits:0,redeems:0},
+    {id:'450946',name:'น.ส.สัจภรณ์ ทองแท่น',dept:'แผนกคลังพัสดุ',role:'employee',credits:0,redeems:0},
+    {id:'498214',name:'นางฟารากียะห์ มูสตอปาร์',dept:'แผนกคลังพัสดุ',role:'employee',credits:0,redeems:0},
+    {id:'498583',name:'น.ส.วันวิสาข์ เจิงกลิ่นจันทร์',dept:'แผนกสนับสนุน',role:'employee',credits:0,redeems:0},
+    {id:'499241',name:'น.ส.ไดนี เบ็ญดือรามัน',dept:'แผนกสนับสนุน',role:'employee',credits:0,redeems:0},
+    {id:'501193',name:'นางโซรัยยา วาแมดีซา',dept:'แผนกสนับสนุน',role:'employee',credits:0,redeems:0},
+    {id:'509716',name:'นายธีรเดช เพชรเกตุ',dept:'แผนกสนับสนุน',role:'employee',credits:0,redeems:0},
+    {id:'496836',name:'นายเพ็ชร์อนันท์ คาระวะสุนทร',dept:'กฟส.ยะหริ่ง',role:'employee',credits:0,redeems:0},
+    {id:'505784',name:'นายอนัส เจ๊ะเละ',dept:'กฟส.ยะหริ่ง',role:'employee',credits:0,redeems:0},
+    {id:'505785',name:'นายมูฮัมหมัดซัมสุดีน อาแว',dept:'กฟส.ยะหริ่ง',role:'employee',credits:0,redeems:0},
+    {id:'508671',name:'นายอีรฟาน ฮะยีหามะ',dept:'กฟส.หนองจิก',role:'employee',credits:0,redeems:0},
+    {id:'514764',name:'นายศิริพงษ์ จันทร์ทอง',dept:'กฟส.ยะหริ่ง',role:'employee',credits:0,redeems:0},
+    {id:'496594',name:'นายซูนัยดี จารง',dept:'กฟส.ยะรัง',role:'employee',credits:0,redeems:0},
+    {id:'496795',name:'นายกอบชัย ตุ้มระย้า',dept:'กฟส.ยะรัง',role:'employee',credits:0,redeems:0},
+    {id:'497165',name:'นายซูลกิฟลี อาแว',dept:'กฟส.ยะรัง',role:'employee',credits:0,redeems:0},
+    {id:'503080',name:'นายมัชดี วาโมง',dept:'กฟส.ยะรัง',role:'employee',credits:0,redeems:0},
+    {id:'503694',name:'นายรุสดี จารง',dept:'กฟส.ยะรัง',role:'employee',credits:0,redeems:0},
+    {id:'508667',name:'นายอูลล์วี เฮงตาแกะ',dept:'กฟส.ยะรัง',role:'employee',credits:0,redeems:0},
+    {id:'512161',name:'นายอำรี แวโดยี',dept:'กฟส.ยะรัง',role:'employee',credits:0,redeems:0},
+    {id:'9004104',name:'นายอุทัย หมายดี',dept:'แผนกปฏิบัติการ',role:'employee',credits:0,redeems:0},
+    {id:'9004105',name:'นายมูฮัมหมัดรูซลี แวนาแว',dept:'แผนกปฏิบัติการ',role:'employee',credits:0,redeems:0},
+    {id:'9004108',name:'นายสีดิ อีซอ',dept:'แผนกปฏิบัติการ',role:'employee',credits:0,redeems:0},
+    {id:'9004109',name:'นายอับดุลรอนิง ปายอ',dept:'แผนกปฏิบัติการ',role:'employee',credits:0,redeems:0},
+    {id:'9004111',name:'นายมูฮำหมัดนูร มายีด',dept:'แผนกปฏิบัติการ',role:'employee',credits:0,redeems:0},
+    {id:'9004113',name:'นายนิรุสลาน ดือราแม',dept:'แผนกปฏิบัติการ',role:'employee',credits:0,redeems:0},
+    {id:'9004114',name:'นายเจ๊ะมาหนิ วาแม็ง',dept:'กฟส.โคกโพธิ์',role:'employee',credits:0,redeems:0},
+    {id:'9005283',name:'นายชลิต แซ่หล่อ',dept:'แผนกปฏิบัติการ',role:'employee',credits:0,redeems:0},
+    {id:'9005285',name:'นายไซนูลอาบีดีน สาเมาะ',dept:'แผนกปฏิบัติการ',role:'employee',credits:0,redeems:0},
+    {id:'9006574',name:'นายกอเดช หมัดเบ็นหลี',dept:'แผนกปฏิบัติการ',role:'employee',credits:0,redeems:0},
+    {id:'9010004',name:'นายอดินันต์ อาเตะ',dept:'กฟส.ยะรัง',role:'employee',credits:0,redeems:0},
+    {id:'9011995',name:'ว่าที่ร้อยตรี อิมซัม มามะ',dept:'แผนกปฏิบัติการ',role:'employee',credits:0,redeems:0},
+    {id:'9012008',name:'นายธีระยุทธ ดอเล๊าะ',dept:'แผนกปฏิบัติการ',role:'employee',credits:0,redeems:0},
+    {id:'9012014',name:'นายศรนริศทร์ แช่มช้อย',dept:'แผนกบริการลูกค้า',role:'employee',credits:0,redeems:0},
+    {id:'9012837',name:'นายจารุณ ชุมอ่อน',dept:'แผนกบริการลูกค้า',role:'employee',credits:0,redeems:0},
+    {id:'9012015',name:'นายวาเลนท์ บัวดำ',dept:'แผนกมิเตอร์',role:'employee',credits:0,redeems:0},
+    {id:'9012054',name:'นายนารวี เจะอาแซ',dept:'แผนกมิเตอร์',role:'employee',credits:0,redeems:0},
+    {id:'9012836',name:'นายนฐากร ชะโณวรรณะ',dept:'แผนกมิเตอร์',role:'employee',credits:0,redeems:0},
+    {id:'9007866',name:'นายสมพงษ์ พงค์รัตน์',dept:'กฟส.โคกโพธิ์',role:'employee',credits:0,redeems:0},
+    {id:'426117',name:'นายสามารถ โทบุรี',dept:'กฟส.โคกโพธิ์',role:'employee',credits:0,redeems:0},
+    {id:'480307',name:'นายธนชัย ขาวสังข์',dept:'กฟส.โคกโพธิ์',role:'employee',credits:0,redeems:0},
+    {id:'499004',name:'นายธนบัตร นวลเจริญ',dept:'กฟส.โคกโพธิ์',role:'employee',credits:0,redeems:0},
+    {id:'507821',name:'นายกมลชัย แก้วทอน',dept:'กฟส.โคกโพธิ์',role:'employee',credits:0,redeems:0},
+    {id:'496390',name:'นายวงศกร แก้วทองคง',dept:'กฟส.โคกโพธิ์',role:'employee',credits:0,redeems:0},
+    {id:'502416',name:'นายคุณานนต์ จันทร์ศิริ',dept:'กฟส.โคกโพธิ์',role:'employee',credits:0,redeems:0},
+    {id:'513814',name:'น.ส.ชิดชนนี เก็บบุญเกิด',dept:'กฟส.โคกโพธิ์',role:'employee',credits:0,redeems:0},
+    {id:'480967',name:'นายธีระวัฒน์ วุ่นสะยุคะ',dept:'กฟส.แม่ลาน',role:'employee',credits:0,redeems:0},
+    {id:'497332',name:'นายวชิรนันต์ สังคนาคินทร์',dept:'กฟส.แม่ลาน',role:'employee',credits:0,redeems:0},
+    {id:'499850',name:'นายวิญญู พัฒนนิวาสน์',dept:'กฟส.แม่ลาน',role:'employee',credits:0,redeems:0},
+    {id:'510886',name:'นายอภิวัฒน์ นวลปาน',dept:'กฟส.แม่ลาน',role:'employee',credits:0,redeems:0},
+    {id:'511016',name:'นายธิรวัฒน์ พุ่มมาก',dept:'กฟส.แม่ลาน',role:'employee',credits:0,redeems:0},
+    {id:'511036',name:'ว่าที่ร้อยตรี ยุสรี หะยีปิยวงศ์',dept:'กฟส.แม่ลาน',role:'employee',credits:0,redeems:0},
+    {id:'480250',name:'นายณัฐพงศ์ เดชดี',dept:'กฟส.หนองจิก',role:'employee',credits:0,redeems:0},
+    {id:'503083',name:'นายสันติ แซ่ลิ่ม',dept:'กฟส.หนองจิก',role:'employee',credits:0,redeems:0},
+    {id:'504581',name:'นายวีรเดช ประเสริฐธนบุตร',dept:'กฟส.หนองจิก',role:'employee',credits:0,redeems:0},
+    {id:'509751',name:'นายอัลบูคอรี ดือมอง',dept:'กฟส.หนองจิก',role:'employee',credits:0,redeems:0},
+    {id:'510792',name:'นายสราวุธ หลำขุน',dept:'กฟส.หนองจิก',role:'employee',credits:0,redeems:0},
+    {id:'510795',name:'นายอับดุลวาริษ ดอเลาะ',dept:'กฟส.หนองจิก',role:'employee',credits:0,redeems:0},
+    {id:'497164',name:'นายอิสมาแอ สาเฮาะ',dept:'กฟส.หนองจิก',role:'employee',credits:0,redeems:0},
+    {id:'511833',name:'นายวุฒิพงษ์ ขาวรัก',dept:'กฟส.หนองจิก',role:'employee',credits:0,redeems:0},
+    {id:'511854',name:'นายอับดุลลาซิ อาแว',dept:'กฟส.หนองจิก',role:'employee',credits:0,redeems:0},
+    {id:'9007889',name:'นายมะนาวี ตาเละ',dept:'กฟส.หนองจิก',role:'employee',credits:0,redeems:0},
+    {id:'515665',name:'นายภูรีทัศน์ สุวรรณพรหม',dept:'กฟส.หนองจิก',role:'employee',credits:0,redeems:0}
+  ],
+  warnings:[
+    {id:'W-001',emp_id:'278629',emp_name:'นางนฤมล เจริญพานิช',date:'2568-05-12',issue:'ลืมใส่สายรัดคางหมวกนิรภัย',impact:'ใบเตือนครั้งที่ 1',status:'active'},
+    {id:'W-004',emp_id:'278629',emp_name:'นางนฤมล เจริญพานิช',date:'2567-11-03',issue:'แต่งกายผิดระเบียบ',impact:'ใบเตือนครั้งที่ 1',status:'redeemed',redeemed_date:'2568-01-15'},
+  ]
+};
+const APP={vf:'pending',pendingReset:null};
+
+// ══ DEMO MODE — สำหรับนำเสนอ ══
+
+
+// ══ SUPABASE CONFIG ══
+const SB_URL = 'https://kgcnuelqgawslfcfzdcd.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtnY251ZWxxZ2F3c2xmY2Z6ZGNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQyNDg1NzgsImV4cCI6MjA4OTgyNDU3OH0.xlVn5RYNgfHf87tUYyMyMJWIGvLCD085y1g3EMEAf-Q';
+const SB_BUCKET = 'near-miss-photos';
+
+// ── สร้าง URL รูปจาก Supabase Storage ──
+function photoUrl(reportCode, idx, ext='jpg') {
+  return `${SB_URL}/storage/v1/object/public/${SB_BUCKET}/${reportCode}/photo_${idx}.${ext}`;
+}
+
+// ── โหลดและแสดงรูปในการ์ด (จาก photo_urls ใน DB) ──
+async function loadPhotos(reportCode, photoCount, containerId, photoUrls) {
+  const el = document.getElementById(containerId);
+  if (!el || !photoCount) return;
+
+  // ถ้ามี photo_urls จาก DB ใช้ตรงๆ เลย
+  if (photoUrls && photoUrls.length > 0) {
+    el.innerHTML = photoUrls.map(u => `
+      <img src="${u}" onclick="adminViewPhoto('${u}')"
+        style="width:72px;height:72px;object-fit:cover;border-radius:8px;border:2px solid var(--border);cursor:pointer;transition:border-color .2s;"
+        onmouseover="this.style.borderColor='var(--green)'" onmouseout="this.style.borderColor='var(--border)'"
+        onerror="this.style.display='none'"
+        title="คลิกเพื่อขยาย">`).join('');
+    return;
+  }
+
+  // fallback: guess extension (กรณีรายงานเก่าที่ยังไม่มี photo_urls)
+  el.innerHTML = '<div style="font-size:11px;color:var(--muted);">⌛ กำลังโหลดรูป...</div>';
+  const exts = ['jpg','jpeg','png','webp'];
+  const found = [];
+  for (let i = 0; i < photoCount; i++) {
+    let url = null;
+    for (const ext of exts) {
+      const u = photoUrl(reportCode, i, ext);
+      try {
+        const res = await fetch(u, { method:'HEAD' });
+        if (res.ok) { url = u; break; }
+      } catch(_) {}
+    }
+    if (url) found.push(url);
+  }
+  if (!found.length) {
+    el.innerHTML = '<div style="font-size:11px;color:var(--muted);">ไม่พบรูปใน Storage</div>';
+    return;
+  }
+  el.innerHTML = found.map((u,i) => `
+    <img src="${u}" onclick="adminViewPhoto('${u}')"
+      style="width:72px;height:72px;object-fit:cover;border-radius:8px;border:2px solid var(--border);cursor:pointer;transition:border-color .2s;"
+      onmouseover="this.style.borderColor='var(--green)'" onmouseout="this.style.borderColor='var(--border)'"
+      onerror="this.style.display='none'"
+      title="คลิกเพื่อขยาย">`).join('');
+}
+
+// ── Lightbox ดูรูปเต็มจอ ──
+function adminViewPhoto(url) {
+  const ov = document.createElement('div');
+  ov.style.cssText = 'position:fixed;inset:0;background:#000000ee;z-index:999;display:flex;align-items:center;justify-content:center;cursor:zoom-out;';
+  ov.onclick = () => ov.remove();
+  ov.innerHTML = `<img src="${url}" style="max-width:95vw;max-height:92vh;border-radius:10px;box-shadow:0 0 40px #000;">`
+    + `<button onclick="this.parentElement.remove()" style="position:absolute;top:16px;right:20px;background:none;border:none;color:#fff;font-size:28px;cursor:pointer;line-height:1;">✕</button>`;
+  document.body.appendChild(ov);
+}
+
+const sbHeaders = {
+  'Content-Type': 'application/json',
+  'apikey': SB_KEY,
+  'Authorization': `Bearer ${SB_KEY}`
+};
+
+async function sbGet(table, query='') {
+  const res = await fetch(`${SB_URL}/rest/v1/${table}?${query}&order=created_at.desc`, { headers: sbHeaders });
+  return res.ok ? res.json() : [];
+}
+
+async function sbPatch(table, uuid, data) {
+  const res = await fetch(`${SB_URL}/rest/v1/${table}?id=eq.${uuid}`, {
+    method: 'PATCH',
+    headers: { ...sbHeaders, 'Prefer': 'return=minimal' },
+    body: JSON.stringify(data)
+  });
+  return res.ok;
+}
+
+// ══ INIT ══
+document.addEventListener('DOMContentLoaded', async () => {
+  showToast('⌛ กำลังโหลดข้อมูล...', 'amber');
+  await loadEmployees();
+  await loadReports();
+  await loadWarnings();
+  renderDash(); renderVerify(); renderCredits(); renderWarnHist(); renderUsers(); fillEmpDD(); updateBadge(); anRenderAll();
+  showToast('✅ โหลดข้อมูลสำเร็จ');
+});
+
+// โหลด employees จาก Supabase — ได้ทั้ง UUID (id) และ emp_code
+// เก็บใน DB.employees แทน hardcode เดิม
+async function loadEmployees() {
+  try {
+    const rows = await sbGet('employees', 'select=id,emp_code,full_name,department,branch,role,credits,total_redeems');
+    if (rows && rows.length > 0) {
+      // map ให้ตรงกับ format ที่ admin ใช้ทั่วไป
+      // id = emp_code (ใช้ใน UI), _uuid = UUID จริง (ใช้ patch)
+      DB.employees = rows.map(r => ({
+        id:      r.emp_code,      // ← ใช้ emp_code เป็น key หลักใน UI
+        _uuid:   r.id,            // ← UUID จริงจาก Supabase (ใช้ตอน patch)
+        name:    r.full_name,
+        dept:    r.department,
+        branch:  r.branch         || r.department || 'ไม่ระบุ',
+        role:    r.role,
+        credits: r.credits        || 0,
+        redeems: r.total_redeems  || 0,
+      }));
+      console.log(`✅ โหลด ${DB.employees.length} พนักงานจาก Supabase`);
+    }
+    // ถ้า Supabase ว่าง → ใช้ hardcode เดิมใน DB.employees
+  } catch(e) {
+    console.warn('loadEmployees error, using hardcoded:', e.message);
+  }
+}
+
+// ══ loadReports: ดึง near_miss_reports อย่างเดียว (ไม่ join)
+// resolve ชื่อพนักงานจาก DB.employees โดยใช้ _uuid ที่โหลดมาแล้ว
+async function loadReports() {
+  try {
+    const rows = await sbGet('near_miss_reports', 'select=*');
+    if (rows && rows.length > 0) {
+      DB.reports = rows.map(r => {
+        // หาพนักงานจาก _uuid (UUID จริงจาก Supabase)
+        const emp = DB.employees.find(e => e._uuid === r.employee_id);
+        return {
+          id:            r.report_code || `NM-${r.id.slice(0,8)}`,
+          _uuid:         r.id,
+          date:          r.created_at ? r.created_at.split('T')[0] : '',
+          emp_id:        emp?.id || r.employee_id || null, // emp_code หรือ UUID
+          emp_name:      r.is_anonymous ? 'นิรนาม' : (emp?.name || '—'),
+          branch:        emp?.branch || 'ไม่ระบุ',
+          text:          r.report_text,
+          risk:          r.risk_level,
+          category:      r.category,
+          credits:       r.credits_given || 0,
+          status:        r.status,
+          is_anon:       r.is_anonymous,
+          photos:        r.photo_count  || 0,
+          photo_urls:    r.photo_urls   || [],
+          verified_by:   r.verified_by  || null,
+          verified_date: r.verified_at  ? r.verified_at.split('T')[0] : null,
+          reject_reason: r.reject_reason|| null,
+        };
+      });
+      console.log(`✅ โหลด ${DB.reports.length} รายงานจาก Supabase`);
+    } else {
+      DB.reports = [];
+      console.log('ℹ️ ไม่มีรายงานใน Supabase');
+    }
+  } catch(e) {
+    DB.reports = [];
+    console.warn('loadReports error:', e.message);
+  }
+}
+
+// ══ NAV ══
+function go(tab){
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById(`p-${tab}`)?.classList.add('active');
+  document.getElementById(`t-${tab}`)?.classList.add('active');
+  // update bottom nav
+  document.querySelectorAll('.bn-btn').forEach(b=>b.classList.remove('active'));
+  if(tab==='dash') document.getElementById('bn-dash')?.classList.add('active');
+  else if(tab==='verify') document.getElementById('bn-verify')?.classList.add('active');
+  else document.getElementById('bn-more')?.classList.add('active');
+  if(tab==='analytics') anRenderAll();
+  if(tab==='dash') anRenderAll();
+  if(tab==='settings') stLoad();
+  window.scrollTo(0,0);
+}
+function toggleMoreMenu(){
+  document.getElementById('more-ov').classList.toggle('show');
+}
+function updateBadge(){
+  const n=DB.reports.filter(r=>r.status==='pending').length;
+  const el=document.getElementById('bdg-p');
+  el.textContent=n; el.style.display=n>0?'':'none';
+}
+
+// ══ DASHBOARD ══
+function renderDash(){
+  const pend=DB.reports.filter(r=>r.status==='pending').length;
+  const high=DB.reports.filter(r=>r.risk==='High'&&r.status==='pending').length;
+  const ver=DB.reports.filter(r=>r.status==='verified').length;
+  const rej=DB.reports.filter(r=>r.status==='rejected').length;
+  document.getElementById('db-stats').innerHTML=`
+    <div class="stat-card"><div class="stat-num" style="color:var(--amber)">${pend}</div><div class="stat-lbl">รอตรวจสอบ</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--red)">${high}</div><div class="stat-lbl">High Risk รอ</div><div class="stat-sub" style="color:var(--red)">เร่งด่วน</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--green)">${ver}</div><div class="stat-lbl">ยืนยันแล้ว</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--muted)">${rej}</div><div class="stat-lbl">ปฏิเสธ</div></div>`;
+  const nea=DB.reports.length;
+  const minH=nea>0?`~${Math.max(1,Math.round(nea/29))}`:'0';
+  const majH=nea>=300?`~${Math.floor(nea/300)}`:'0';
+  document.getElementById('h-nea').textContent=nea;
+  document.getElementById('h-min').textContent=minH;
+  document.getElementById('h-maj').textContent=majH;
+  const hp=DB.reports.filter(r=>r.risk==='High'&&r.status==='pending');
+  const qel=document.getElementById('db-quick');
+  qel.innerHTML=hp.length?hp.slice(0,3).map(r=>`
+    <div class="rc high" style="margin-bottom:8px;">
+      <div class="rc-hd"><span class="rc-id">${r.id} · ${fd(r.date)}</span><div class="rc-badges"><span class="rb rb-h">⚡ สูง</span><span class="rb-p">⏳ รอ</span></div></div>
+      <div class="rc-text">${r.text}</div>
+      <div class="rc-actions"><button class="btn-v" onclick="doVer('${r.id}');renderDash()">✅ ยืนยัน</button><button class="btn-d" onclick="go('verify')">ดูทั้งหมด</button></div>
+    </div>`).join('')
+    :'<div style="color:var(--green);text-align:center;padding:16px;font-size:13px;">✅ ไม่มี High Risk รอตรวจสอบ</div>';
+}
+
+// ══ VERIFY ══
+function vf(f,btn){APP.vf=f;document.querySelectorAll('.ftab').forEach(t=>t.classList.remove('active'));btn.classList.add('active');renderVerify();}
+function renderVerify(){
+  const q=(document.getElementById('v-q')?.value||'').toLowerCase();
+  const rb={High:'<span class="rb rb-h">⚡ สูง</span>',Medium:'<span class="rb rb-m">⚠ กลาง</span>',Low:'<span class="rb rb-l">✓ ต่ำ</span>'};
+  const sb={pending:'<span class="rb-p">⏳ รอ</span>',verified:'<span class="rb-ok">✓ ยืนยัน</span>',rejected:'<span class="rb-no">✗ ปฏิเสธ</span>'};
+  let list=DB.reports.filter(r=>{
+    const mf=APP.vf==='all'?true:APP.vf==='high'?r.risk==='High':r.status===APP.vf;
+    const ms=!q||r.text.toLowerCase().includes(q)||(r.emp_name||'').toLowerCase().includes(q);
+    return mf&&ms;
+  }).sort((a,b)=>{
+    if(a.status==='pending'&&b.status!=='pending')return -1;
+    if(a.status!=='pending'&&b.status==='pending')return 1;
+    return b.id.localeCompare(a.id);
+  });
+  const el=document.getElementById('v-list');
+  if(!list.length){el.innerHTML='<div style="text-align:center;color:var(--muted);padding:40px;">📋 ไม่พบรายงาน</div>';return;}
+  el.innerHTML=list.map(r=>{
+    let actions='';
+    if(r.status==='pending'){
+      const bon=r.risk==='High'?50:r.risk==='Medium'?25:10;
+      actions=`<div class="rc-actions">
+        <button class="btn-v" onclick="doVer('${r.id}')">✅ ยืนยัน</button>
+        <button class="btn-r" onclick="showRej('${r.id}')">✗ ปฏิเสธ</button>
+        <button class="btn-d" onclick="toggleAI('${r.id}')">รายละเอียด</button>
+      </div>
+      <div class="reject-wrap" id="rw-${r.id}">
+        <textarea class="reject-ta" id="rt-${r.id}" placeholder="ระบุเหตุผลที่ปฏิเสธ..."></textarea>
+        <div class="rej-btns">
+          <button class="btn-cr" onclick="doRej('${r.id}')">ยืนยันปฏิเสธ</button>
+          <button class="btn-cx" onclick="document.getElementById('rw-${r.id}').classList.remove('show')">ยกเลิก</button>
+        </div>
+      </div>`;
+    }else if(r.status==='verified'||r.status==='resolved'){
+      const bon=r.risk==='High'?50:r.risk==='Medium'?25:10;
+      actions=`<div class="done-v">✅ ยืนยันโดย ${r.verified_by||'จป.'} · ${fd(r.verified_date)}</div>
+        ${r.status!=='resolved'&&!r.is_anon?`<button class="btn-bonus" onclick="doBonus('${r.id}',${bon})">🔧 แก้ไขแล้ว → Bonus +${bon} Credits</button>`:''}`;
+    }else{
+      actions=`<div class="done-r">✗ ปฏิเสธโดย ${r.verified_by||'จป.'} · ${fd(r.verified_date)}</div>
+        ${r.reject_reason?`<div class="reject-note">เหตุผล: ${r.reject_reason}</div>`:''}`;
+    }
+    return `<div class="rc ${r.risk.toLowerCase()}">
+      <div class="rc-hd"><span class="rc-id">${r.id} · ${fd(r.date)}</span><div class="rc-badges">${rb[r.risk]||''}${sb[r.status]||''}</div></div>
+      <div class="rc-text">${r.text}</div>
+      <div class="rc-meta">
+        ${r.is_anon?'<span>🔒 นิรนาม</span>':`<span style="color:var(--ice);font-weight:600;">👤 ${r.emp_name}</span>`}
+        <span>📁 ${r.category}</span>
+        ${r.credits>0?`<span class="rc-cred">+${r.credits}</span>`:''}
+      </div>
+      ${r.photos > 0 ? `
+      <div style="margin-bottom:9px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+          <span style="font-size:11px;color:var(--muted);">📷 รูปภาพ ${r.photos} รูป</span>
+          <button class="btn-sm" onclick="loadPhotos('${r.id}',${r.photos},'ph-${r.id}',${JSON.stringify(r.photo_urls||[])});this.style.display='none'">โหลดรูป</button>
+        </div>
+        <div id="ph-${r.id}" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+      </div>` : '<div style="font-size:11px;color:var(--muted);margin-bottom:9px;">📷 ไม่มีรูปภาพ</div>'}
+      <div id="ai-${r.id}" style="display:none;background:var(--navy);border-radius:8px;padding:10px;margin-bottom:9px;font-size:12px;color:var(--muted);">
+        เชื่อม Claude API เพื่อดู AI Analysis จริง
+      </div>
+      ${actions}
+    </div>`;
+  }).join('');
+}
+function toggleAI(id){const e=document.getElementById(`ai-${id}`);e.style.display=e.style.display==='none'?'block':'none';}
+function showRej(id){document.getElementById(`rw-${id}`)?.classList.add('show');}
+async function doVer(id){
+  const r=DB.reports.find(x=>x.id===id); if(!r) return;
+  const today = new Date().toISOString();
+
+  const adminName = (()=>{ try{ return JSON.parse(sessionStorage.getItem('sv_session')||'{}').user_name||'จป.'; }catch{ return 'จป.'; } })();
+  // 1) อัปเดต status ของรายงาน
+  const ok = await sbPatch('near_miss_reports', r._uuid, {
+    status:      'verified',
+    verified_at: today,
+    verified_by: adminName
+  });
+  if(!ok){ showToast('❌ บันทึกไม่สำเร็จ','red'); return; }
+
+  // 2) บวก credits ให้พนักงานใน Supabase + บันทึก credit_transactions
+  if(!r.is_anon && r.credits > 0) {
+    const emp = DB.employees.find(x => x.id === r.emp_id);
+    console.log('doVer emp found:', emp, 'r.emp_id:', r.emp_id);
+    console.log('emp._uuid:', emp?._uuid, 'newCredits:', (emp?.credits||0) + r.credits);
+    if(emp && emp._uuid) {
+      const newCredits = (emp.credits || 0) + r.credits;
+      // patch employees.credits
+      const patchOk = await sbPatch('employees', emp._uuid, { credits: newCredits });
+      console.log('patch employees result:', patchOk);
+      if(patchOk) emp.credits = newCredits;
+
+      // insert credit_transactions
+      try {
+        await fetch(`${SB_URL}/rest/v1/credit_transactions`, {
+          method: 'POST',
+          headers: { ...sbHeaders, 'Prefer': 'return=minimal' },
+          body: JSON.stringify({
+            employee_id:   emp._uuid,
+            type:          'earn',
+            amount:        r.credits,
+            balance_after: newCredits,
+            description:   `ยืนยันรายงาน ${r.id} — ${r.risk} Risk`,
+            report_id:     r._uuid
+          })
+        });
+        console.log('credit_transactions inserted ✅');
+      } catch(e) { console.warn('insert credit_transactions error:', e.message); }
+    } else {
+      console.warn('emp._uuid missing — cannot patch credits. emp:', emp);
+    }
+  }
+
+  r.status='verified'; r.verified_date=today.split('T')[0]; r.verified_by=adminName;
+  renderVerify(); renderDash(); renderCredits(); updateBadge();
+  showToast(`✅ ยืนยัน ${id} — +${r.credits} Credits`);
+}
+
+async function doRej(id){
+  const reason=document.getElementById(`rt-${id}`)?.value.trim();
+  if(!reason){ showToast('กรุณาระบุเหตุผล','red'); return; }
+  const r=DB.reports.find(x=>x.id===id); if(!r) return;
+
+  // Supabase — patch โดยตรง
+  const ok = await sbPatch('near_miss_reports', r._uuid, {
+    status:        'rejected',
+    reject_reason: reason,
+    verified_at:   new Date().toISOString(),
+    verified_by:   null
+  });
+  if(!ok){ showToast('❌ บันทึกไม่สำเร็จ','red'); return; }
+
+  r.status='rejected'; r.reject_reason=reason;
+  renderVerify(); renderDash(); updateBadge();
+  showToast(`✗ ปฏิเสธ ${id}`,'red');
+}
+async function doBonus(id,bon){
+  const r=DB.reports.find(x=>x.id===id); if(!r)return;
+  const e=DB.employees.find(x=>x.id===r.emp_id);
+
+  // 1) patch report status → resolved
+  if(r._uuid && !r._uuid.startsWith('demo-')){
+    await sbPatch('near_miss_reports', r._uuid, {status:'resolved'});
+  }
+
+  // 2) บวก bonus credits ให้ employee ใน Supabase
+  if(e && e._uuid){
+    const newCredits = (e.credits||0) + bon;
+    const ok = await sbPatch('employees', e._uuid, {credits: newCredits});
+    if(ok){
+      e.credits = newCredits;
+      // บันทึก credit_transactions
+      try {
+        await fetch(`${SB_URL}/rest/v1/credit_transactions`,{
+          method:'POST',
+          headers:{...sbHeaders,'Prefer':'return=minimal'},
+          body:JSON.stringify({
+            employee_id:   e._uuid,
+            type:          'earn',
+            amount:        bon,
+            balance_after: newCredits,
+            description:   `Bonus แก้ไขแล้ว ${r.id}`,
+            report_id:     r._uuid||null
+          })
+        });
+      } catch(err){ console.warn('bonus tx error:',err.message); }
+    }
+  } else if(e){
+    // demo / hardcode — อัปเดต local เท่านั้น
+    e.credits = (e.credits||0) + bon;
+  }
+
+  r.status='resolved';
+  renderVerify(); renderCredits();
+  showToast(`🔧 Bonus +${bon} Credits → ${r.emp_name}`);
+}
+
+// ══ CREDITS ══
+function renderCredits(){
+  const q=(document.getElementById('c-q')?.value||'').toLowerCase();
+  const emps=DB.employees.filter(e=>e.id!=='ADMIN-01'&&(!q||e.name.toLowerCase().includes(q)||e.id.toLowerCase().includes(q)));
+  document.getElementById('c-body').innerHTML=emps.map(e=>{
+    const rpts=DB.reports.filter(r=>r.emp_id===e.id).length;
+    const warns=DB.warnings.filter(w=>w.emp_id===e.id&&w.status==='active').length;
+    return `<tr>
+      <td><div style="font-weight:700">${e.name}</div><div style="font-size:10px;color:var(--muted);font-family:monospace">${e.id}</div></td>
+      <td><span class="cpill">${e.credits}</span></td>
+      <td style="color:var(--muted)">${rpts}</td>
+      <td>${warns?`<span style="color:var(--red);font-weight:700">${warns} ใบ</span>`:'<span style="color:var(--muted)">—</span>'}</td>
+      <td style="color:var(--muted)">${e.redeems}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ══ WARNINGS ══
+function fillEmpDD(){
+  // populate datalist สำหรับ searchable input
+  const dl = document.getElementById('w-emp-list'); if(!dl) return;
+  dl.innerHTML = DB.employees.filter(e=>e.role==='employee')
+    .map(e=>`<option value="${e.name} (${e.id})" data-id="${e.id}">`).join('');
+}
+
+// ── พิมพ์ค้นหาพนักงาน → แสดง dropdown ──
+function wFilterEmp(val) {
+  const dd   = document.getElementById('w-emp-dropdown');
+  const hidEl= document.getElementById('w-emp');
+  const selEl= document.getElementById('w-emp-selected');
+  const selNm= document.getElementById('w-emp-selected-name');
+  if (!dd) return;
+
+  const q = val.trim().toLowerCase();
+  if (!q) { dd.style.display='none'; return; }
+
+  const matches = DB.employees.filter(e =>
+    e.role === 'employee' &&
+    (e.name.toLowerCase().includes(q) || e.id.toLowerCase().includes(q))
+  ).slice(0, 10);
+
+  if (!matches.length) { dd.style.display='none'; return; }
+
+  dd.innerHTML = matches.map(e => {
+    const initial = e.name.replace(/^นาย|^นาง|^น\.ส\.|^นางสาว/,'').trim().charAt(0);
+    const safeName = e.name.replace(/'/g,"&#39;");
+    return `
+    <div onclick="wSelectEmp('${e.id}','${safeName}')"
+      style="padding:8px 12px;cursor:pointer;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border);transition:background .15s;"
+      onmouseover="this.style.background='rgba(0,201,106,0.08)'" onmouseout="this.style.background=''">
+      <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#00c96a22,#00c96a44);border:1px solid #00c96a55;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:var(--green);flex-shrink:0;">${initial}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:600;font-size:13px;color:var(--white);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${e.name}</div>
+        <div style="font-size:11px;color:var(--muted);font-family:monospace;margin-top:1px;">รหัส ${e.id}</div>
+      </div>
+      <svg viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" width="14" height="14" style="flex-shrink:0;"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>`;
+  }).join('');
+  dd.style.display = 'block';
+}
+
+function wSelectEmp(id, name) {
+  document.getElementById('w-emp').value        = id;
+  document.getElementById('w-emp-search').value = '';
+  document.getElementById('w-emp-dropdown').style.display = 'none';
+  const selEl = document.getElementById('w-emp-selected');
+  const selNm = document.getElementById('w-emp-selected-name');
+  const initial = name.replace(/^นาย|^นาง|^น\.ส\.|^นางสาว/,'').trim().charAt(0);
+  selEl.style.display = 'flex';
+  selNm.innerHTML = `
+    <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#00c96a33,#00c96a55);border:1px solid #00c96a77;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--green);flex-shrink:0;">${initial}</div>
+    <div style="flex:1;">
+      <div style="font-size:13px;font-weight:600;color:var(--green);">${name}</div>
+      <div style="font-size:11px;color:var(--muted);font-family:monospace;">รหัส ${id}</div>
+    </div>`;
+}
+
+function wClearEmp() {
+  document.getElementById('w-emp').value        = '';
+  document.getElementById('w-emp-search').value = '';
+  document.getElementById('w-emp-selected').style.display = 'none';
+}
+
+// ปิด dropdown เมื่อคลิกนอกพื้นที่
+document.addEventListener('click', e => {
+  const dd = document.getElementById('w-emp-dropdown');
+  if (dd && !dd.contains(e.target) && e.target.id !== 'w-emp-search') {
+    dd.style.display = 'none';
+  }
+});
+// ══ โหลด warnings จาก Supabase ══
+async function loadWarnings() {
+  try {
+    const rows = await sbGet('warnings', 'select=*');
+    if (rows && rows.length > 0) {
+      DB.warnings = rows.map(r => {
+        const emp = DB.employees.find(e => e._uuid === r.employee_id)
+                 || DB.employees.find(e => e.id    === r.employee_id);
+        return {
+          id:            r.warning_code || r.id,
+          _uuid:         r.id,
+          emp_id:        emp?.id || r.employee_id,
+          emp_uuid:      r.employee_id,
+          emp_name:      emp?.name || '—',
+          date:          r.created_at ? r.created_at.split('T')[0] : '',
+          issue:         r.issue,
+          impact:        r.impact || '—',
+          status:        r.status || 'active',
+          redeemed_date: r.redeemed_at ? r.redeemed_at.split('T')[0] : null,
+        };
+      });
+      console.log(`✅ โหลด ${DB.warnings.length} ใบเตือนจาก Supabase`);
+    }
+  } catch(e) { console.warn('loadWarnings error:', e.message); }
+}
+async function submitWarning(){
+  const empId=document.getElementById('w-emp').value;
+  const issue=document.getElementById('w-issue').value.trim();
+  const cnt=parseInt(document.getElementById('w-cnt').value)||1;
+  if(!empId){showToast('กรุณาเลือกพนักงาน','amber');return;}
+  if(!issue){showToast('กรุณาระบุเรื่องใบเตือน','amber');return;}
+
+  const emp=DB.employees.find(e=>e.id===empId);
+  const today=new Date().toISOString().split('T')[0];
+  // ใช้ timestamp + random แทน DB.warnings.length เพื่อไม่ให้ซ้ำกับ Supabase
+  const wid='W-'+today.replace(/-/g,'')+'-'+Date.now().toString(36).toUpperCase().slice(-4)+Math.random().toString(36).slice(2,4).toUpperCase();
+
+  // ── resolve UUID จาก Supabase ถ้า _uuid ยังไม่มี ──
+  let empUUID = emp?._uuid || null;
+  if (!empUUID) {
+    try {
+      const res = await fetch(`${SB_URL}/rest/v1/employees?emp_code=eq.${empId}&select=id`, { headers: sbHeaders });
+      const rows = res.ok ? await res.json() : [];
+      if (rows.length > 0) {
+        empUUID = rows[0].id;
+        if (emp) emp._uuid = empUUID; // cache ไว้ใช้ต่อ
+      }
+    } catch(e) { console.warn('resolve emp UUID error:', e.message); }
+  }
+
+  if (!empUUID) {
+    showToast('❌ ไม่พบพนักงานในระบบ Supabase — ไม่สามารถบันทึกได้', 'red');
+    return;
+  }
+
+  // บันทึกลง Supabase — employee_id ต้องเป็น UUID จริงเสมอ
+  try {
+    const res = await fetch(`${SB_URL}/rest/v1/warnings`, {
+      method: 'POST',
+      headers: { ...sbHeaders, 'Prefer': 'return=representation' },
+      body: JSON.stringify({
+        warning_code: wid,
+        employee_id:  empUUID,
+        issue:        issue,
+        impact:       `ใบเตือนครั้งที่ ${cnt}`,
+        status:       'active'
+      })
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(()=>({}));
+      console.error('insert warning failed:', err);
+      showToast(`❌ บันทึกไม่สำเร็จ: ${err.message || res.status}`, 'red');
+      return;
+    }
+    const inserted = await res.json();
+    const newUUID = inserted?.[0]?.id || wid;
+    DB.warnings.unshift({id:wid, _uuid:newUUID, emp_id:empId, emp_name:emp?.name||empId, date:today, issue, impact:`ใบเตือนครั้งที่ ${cnt}`, status:'active'});
+    document.getElementById('w-issue').value=''; document.getElementById('w-cnt').value='1'; wClearEmp();
+    renderWarnHist(); renderCredits();
+    showToast(`⚠ ออกใบเตือน ${wid} ให้ ${emp?.name} แล้ว`,'amber');
+  } catch(e) {
+    console.error('insert warning error:', e.message);
+    showToast('❌ เกิดข้อผิดพลาดในการบันทึก', 'red');
+  }
+}
+function renderWarnHist(){
+  const el=document.getElementById('w-hist');
+  if(!DB.warnings.length){el.innerHTML='<div style="color:var(--muted);text-align:center;padding:20px">ยังไม่มีประวัติใบเตือน</div>';return;}
+  el.innerHTML=DB.warnings.map(w=>`
+    <div class="wi ${w.status}">
+      <div>
+        <div class="wi-name">${w.emp_name} <span style="font-size:10px;color:var(--muted);font-family:monospace">${w.emp_id}</span></div>
+        <div class="wi-issue">${w.issue}</div>
+        <div class="wi-impact">${w.impact} · ${fd(w.date)}</div>
+      </div>
+      <span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:5px;white-space:nowrap;${w.status==='active'?'background:#ef444422;border:1px solid #ef444433;color:var(--red)':'background:#00c96a22;border:1px solid #00c96a33;color:var(--green)'}">
+        ${w.status==='active'?'ยังมีผล':'หักล้างแล้ว'}
+      </span>
+    </div>`).join('');
+}
+
+// ══ USERS ══
+async function addUser(){
+  const code = document.getElementById('u-code').value.trim();
+  const name = document.getElementById('u-name').value.trim();
+  const dept = document.getElementById('u-dept').value.trim();
+  const role = document.getElementById('u-role').value;
+  const pw   = document.getElementById('u-pw')?.value.trim() || '1234';
+
+  if(!code||!name){ showToast('กรุณากรอกรหัสและชื่อพนักงาน','amber'); return; }
+  if(DB.employees.find(e=>e.id===code)){ showToast('รหัสพนักงานซ้ำในระบบ','red'); return; }
+
+  const btn = document.querySelector('#p-users .btn-prim');
+  if(btn){ btn.disabled=true; btn.textContent='⌛ กำลังบันทึก...'; }
+
+  try {
+    const res = await fetch(`${SB_URL}/rest/v1/employees`, {
+      method: 'POST',
+      headers: { ...sbHeaders, 'Prefer': 'return=representation' },
+      body: JSON.stringify({
+        emp_code:     code,
+        full_name:    name,
+        department:   dept || null,
+        role:         role,
+        password_hash: pw,
+        credits:      0,
+        total_redeems: 0
+      })
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(()=>({}));
+      // ตรวจ duplicate key ของ emp_code
+      if (err.code === '23505' || (err.message||'').includes('duplicate')) {
+        showToast('❌ รหัสพนักงานนี้มีอยู่ใน Supabase แล้ว', 'red');
+      } else {
+        showToast(`❌ บันทึกไม่สำเร็จ: ${err.message || res.status}`, 'red');
+      }
+      return;
+    }
+
+    const inserted = await res.json();
+    const newUUID  = inserted?.[0]?.id || null;
+
+    // เพิ่มเข้า local state พร้อม _uuid จริง
+    DB.employees.push({ id:code, _uuid:newUUID, name, dept, role, credits:0, redeems:0 });
+    document.getElementById('u-code').value='';
+    document.getElementById('u-name').value='';
+    document.getElementById('u-dept').value='';
+    if(document.getElementById('u-pw')) document.getElementById('u-pw').value='1234';
+    renderUsers(); fillEmpDD(); renderCredits();
+    showToast(`✅ เพิ่มพนักงาน ${name} (${code}) เข้า Supabase แล้ว`);
+
+  } catch(e) {
+    console.error('addUser error:', e.message);
+    showToast('❌ เกิดข้อผิดพลาด: ' + e.message, 'red');
+  } finally {
+    if(btn){ btn.disabled=false; btn.textContent='➕ เพิ่มพนักงาน'; }
+  }
+}
+function renderUsers(){
+  const rl={employee:'พนักงาน',safety_officer:'จป.',manager:'ผู้จัดการ'};
+  const rc={employee:'r-emp',safety_officer:'r-so',manager:'r-mgr'};
+  document.getElementById('u-body').innerHTML=DB.employees.map(e=>`
+    <tr>
+      <td style="font-family:monospace;font-size:12px;color:var(--muted)">${e.id}</td>
+      <td style="font-weight:700">${e.name}</td>
+      <td style="font-size:12px;color:var(--muted)">${e.dept||'—'}</td>
+      <td><span class="rtag ${rc[e.role]||'r-emp'}">${rl[e.role]||e.role}</span></td>
+      <td><div style="display:flex;gap:6px">
+        <button class="btn-sm" onclick="toggleRole('${e.id}')">เปลี่ยน role</button>
+        <button class="btn-sm red" onclick="openReset('${e.id}','${e.name}')">รีเซ็ตรหัส</button>
+      </div></td>
+    </tr>`).join('');
+}
+async function toggleRole(id){
+  const e=DB.employees.find(x=>x.id===id); if(!e)return;
+  const rs=['employee','safety_officer','manager'];
+  const newRole=rs[(rs.indexOf(e.role)+1)%rs.length];
+
+  if (e._uuid) {
+    const res = await fetch(`${SB_URL}/rest/v1/employees?id=eq.${e._uuid}`, {
+      method: 'PATCH',
+      headers: { ...sbHeaders, 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ role: newRole })
+    });
+    if (!res.ok) { showToast('❌ เปลี่ยน role ไม่สำเร็จ','red'); return; }
+  }
+  e.role = newRole;
+  renderUsers(); showToast(`🔄 ${e.name} → ${newRole}`);
+}
+function openReset(id,name){
+  APP.pendingReset=id;
+  document.getElementById('m-reset-sub').textContent=`พนักงาน: ${name} (${id})`;
+  document.getElementById('m-pw').value='1234';
+  const m=document.getElementById('m-reset');
+  m.style.display='flex';setTimeout(()=>m.classList.add('show'),10);
+}
+async function confirmReset(){
+  const pw = document.getElementById('m-pw').value.trim();
+  if(!pw){ showToast('กรุณาตั้งรหัสผ่าน','amber'); return; }
+
+  const empCode = APP.pendingReset;
+  const emp = DB.employees.find(e => e.id === empCode);
+
+  // ── Patch password_hash ใน Supabase ──
+  if (emp?._uuid) {
+    try {
+      const res = await fetch(`${SB_URL}/rest/v1/employees?id=eq.${emp._uuid}`, {
+        method: 'PATCH',
+        headers: { ...sbHeaders, 'Prefer': 'return=minimal' },
+        body: JSON.stringify({ password_hash: pw })
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(()=>({}));
+        showToast(`❌ รีเซ็ตไม่สำเร็จ: ${err.message || res.status}`, 'red');
+        return;
+      }
+    } catch(e) {
+      showToast('❌ เกิดข้อผิดพลาด: ' + e.message, 'red');
+      return;
+    }
+  } else {
+    showToast('⚠️ ไม่พบ UUID — รีเซ็ตได้เฉพาะใน local (ไม่กระทบ Supabase)', 'amber');
+  }
+
+  closeModal();
+  showToast(`✅ รีเซ็ตรหัสผ่าน ${empCode} เป็น "${pw}" แล้ว`);
+  APP.pendingReset = null;
+}
+function closeModal(){
+  const m=document.getElementById('m-reset');m.classList.remove('show');setTimeout(()=>m.style.display='none',300);
+}
+
+
+// ══ ANALYTICS ══
+let AN_PERIOD = 3;
+function anSetPeriod(months, btn) {
+  AN_PERIOD = months;
+  document.querySelectorAll('.an-ptab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  anRenderAll();
+}
+function anRenderAll() {
+  const reports = anFilterPeriod(DB.reports, AN_PERIOD);
+  anRenderTrend(AN_PERIOD);
+  anRenderTopRisk(reports);
+  anRenderDonut(reports);
+  anRenderHeatmap();
+  anRenderHotspot(reports);
+  anRenderRespTime(reports);
+}
+function anFilterPeriod(reports, months) {
+  const now = new Date();
+  const cutoff = new Date(now.getFullYear(), now.getMonth() - months, 1);
+  return reports.filter(r => {
+    if (!r.date) return false;
+    const m = r.date.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (!m) return false;
+    const d = new Date(parseInt(m[1])-543, parseInt(m[2])-1, parseInt(m[3]));
+    return d >= cutoff;
+  });
+}
+function anRenderTrend(months) {
+  const now = new Date();
+  const labels = [], data = [];
+  const moNames = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+  for (let i = months - 1; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    labels.push(moNames[d.getMonth()]);
+    const count = DB.reports.filter(r => {
+      if (!r.date) return false;
+      const m = r.date.match(/^(\d{4})-(\d{2})/);
+      if (!m) return false;
+      const rY = parseInt(m[1]) - 543, rM = parseInt(m[2]) - 1;
+      return rY === d.getFullYear() && rM === d.getMonth();
+    }).length;
+    data.push(count);
+  }
+  const maxV = Math.max(...data, 1);
+  const W = 360, H = 130, pad = 20;
+  const xStep = (W - pad*2) / (data.length - 1 || 1);
+  const pts = data.map((v, i) => `${pad + i*xStep},${H - pad - (v/maxV)*(H-pad*2)}`).join(' ');
+  const fillPts = `${pad},${H-pad} ` + pts + ` ${pad+(data.length-1)*xStep},${H-pad}`;
+  const svg = document.getElementById('an-trend-svg');
+  if (!svg) return;
+  svg.innerHTML = `
+    <defs><linearGradient id="tg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#00C96A" stop-opacity=".35"/><stop offset="100%" stop-color="#00C96A" stop-opacity="0"/></linearGradient></defs>
+    <polygon points="${fillPts}" fill="url(#tg)"/>
+    <polyline points="${pts}" fill="none" stroke="#00C96A" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+    ${data.map((v,i) => `<circle cx="${pad+i*xStep}" cy="${H-pad-(v/maxV)*(H-pad*2)}" r="4" fill="#00C96A"
+      onmousemove="anShowTip(event,'${labels[i]}: ${data[i]} รายงาน')" onmouseleave="anHideTip()"/>`).join('')}`;
+  document.getElementById('an-trend-labels').innerHTML = labels.map(l => `<span class="trend-lbl">${l}</span>`).join('');
+}
+function anShowTip(e, text) {
+  const t = document.getElementById('an-tooltip');
+  t.textContent = text; t.style.opacity = '1';
+  t.style.left = (e.clientX + 10) + 'px'; t.style.top = (e.clientY - 28) + 'px';
+}
+function anHideTip() { document.getElementById('an-tooltip').style.opacity = '0'; }
+function anRenderTopRisk(reports) {
+  const el = document.getElementById('an-top-risk'); if (!el) return;
+  const cnt = {};
+  reports.forEach(r => { if (r.category) cnt[r.category] = (cnt[r.category]||0)+1; });
+  const sorted = Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,3);
+  const max = sorted[0]?.[1] || 1;
+  el.innerHTML = sorted.length ? sorted.map(([cat,n],i) => `
+    <div style="margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;">
+        <span style="color:var(--ice);">${['🥇','🥈','🥉'][i]} ${cat}</span>
+        <span style="font-weight:700;color:var(--amber);">${n}</span>
+      </div>
+      <div style="height:5px;background:var(--border);border-radius:3px;overflow:hidden;">
+        <div style="height:100%;width:${n/max*100}%;background:var(--amber);border-radius:3px;transition:width 1s;"></div>
+      </div>
+    </div>`).join('')
+  : '<div style="color:var(--muted);font-size:12px;text-align:center;padding:16px;">ยังไม่มีข้อมูล</div>';
+}
+function anRenderDonut(reports) {
+  const svgEl = document.getElementById('an-donut'); if (!svgEl) return;
+  const legEl = document.getElementById('an-donut-legend'); if (!legEl) return;
+  const cats = {}; reports.forEach(r => { if(r.category) cats[r.category]=(cats[r.category]||0)+1; });
+  const entries = Object.entries(cats).sort((a,b)=>b[1]-a[1]);
+  const total = entries.reduce((s,[,v])=>s+v,0);
+  const colors = ['#00C96A','#F59E0B','#EF4444','#5A8AAA','#C8E6FF'];
+  if (!total) { svgEl.innerHTML=''; legEl.innerHTML='<div style="color:var(--muted);font-size:12px;">ยังไม่มีข้อมูล</div>'; return; }
+  let startAngle = -Math.PI/2, paths = '';
+  entries.forEach(([cat,n],i) => {
+    const angle = (n/total)*2*Math.PI;
+    const x1=50+40*Math.cos(startAngle), y1=50+40*Math.sin(startAngle);
+    const x2=50+40*Math.cos(startAngle+angle), y2=50+40*Math.sin(startAngle+angle);
+    const large = angle > Math.PI ? 1 : 0;
+    const col = colors[i % colors.length];
+    paths += `<path d="M50,50 L${x1},${y1} A40,40 0 ${large},1 ${x2},${y2} Z" fill="${col}" opacity=".85"/>`;
+    startAngle += angle;
+  });
+  svgEl.innerHTML = paths + '<circle cx="50" cy="50" r="22" fill="var(--card)"/>'
+    + `<text x="50" y="54" text-anchor="middle" fill="var(--white)" font-size="11" font-weight="700">${total}</text>`;
+  legEl.innerHTML = entries.slice(0,4).map(([cat,n],i) => `
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;">
+      <div style="width:8px;height:8px;border-radius:2px;background:${colors[i%colors.length]};flex-shrink:0;"></div>
+      <span style="font-size:11px;color:var(--ice);">${cat}</span>
+      <span style="margin-left:auto;font-size:11px;font-weight:700;color:var(--muted);">${Math.round(n/total*100)}%</span>
+    </div>`).join('');
+}
+function anRenderHeatmap() {
+  const el = document.getElementById('an-heatmap'); if (!el) return;
+  const reports = DB.reports.filter(r => APP.anPeriod ? (() => {
+    const m = r.date.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (!m) return false;
+    const d = new Date(parseInt(m[1])-543, parseInt(m[2])-1, parseInt(m[3]));
+    const cutoff = new Date(); cutoff.setMonth(cutoff.getMonth() - APP.anPeriod);
+    return d >= cutoff;
+  })() : true);
+
+  // รวบรวม branches และ categories ที่มีในข้อมูลจริง
+  const branchSet = new Set();
+  const catSet = new Set();
+  reports.forEach(r => {
+    branchSet.add(r.branch || 'ไม่ระบุ');
+    catSet.add(r.category || 'ไม่ระบุ');
+  });
+  const branches = [...branchSet].sort();
+  const cats = [...catSet].filter(c => c !== 'ไม่ระบุ').sort();
+  if (cats.length === 0 || branches.length === 0) {
+    el.innerHTML = '<div style="color:var(--muted);font-size:12px;text-align:center;padding:16px;">ยังไม่มีข้อมูลเพียงพอ</div>';
+    return;
+  }
+
+  // นับ grid[branch][cat]
+  const grid = {};
+  branches.forEach(b => { grid[b] = {}; cats.forEach(c => grid[b][c] = 0); });
+  reports.forEach(r => {
+    const b = r.branch || 'ไม่ระบุ';
+    const c = r.category || 'ไม่ระบุ';
+    if (grid[b] && cats.includes(c)) grid[b][c]++;
+  });
+
+  const maxV = Math.max(...branches.flatMap(b => cats.map(c => grid[b][c])), 1);
+  const getHC = v => 'hc' + Math.round((v / maxV) * 8);
+
+  el.innerHTML = `<div style="display:grid;grid-template-columns:90px repeat(${cats.length},1fr);gap:3px;font-size:10px;width:100%;">
+    <div></div>${cats.map(c => `<div style="text-align:center;color:var(--muted);padding-bottom:4px;font-size:9px;line-height:1.3;">${c}</div>`).join('')}
+    ${branches.map(b => `
+      <div style="color:var(--ice);display:flex;align-items:center;font-size:10px;font-weight:600;padding-right:4px;">${b.replace('กฟส.','').replace('กฟจ.','')}</div>
+      ${cats.map(c => {
+        const v = grid[b][c];
+        return `<div class="${getHC(v)}" style="height:30px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;cursor:default;"
+          onmousemove="anShowTip(event,'${b} · ${c}: ${v} รายงาน')" onmouseleave="anHideTip()">${v || ''}</div>`;
+      }).join('')}`).join('')}
+  </div>`;
+}
+function anRenderHotspot(reports) {
+  const el = document.getElementById('an-hotspot'); if (!el) return;
+  const spots = {};
+  reports.forEach(r => {
+    const key = r.category || 'ไม่ระบุ';
+    if (!spots[key]) spots[key] = { count:0, high:0 };
+    spots[key].count++;
+    if (r.risk==='High') spots[key].high++;
+  });
+  const sorted = Object.entries(spots).sort((a,b)=>b[1].high-a[1].high||b[1].count-a[1].count).slice(0,5);
+  el.innerHTML = sorted.length ? sorted.map(([loc,s])=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
+      <div style="flex:1;">
+        <div style="font-size:13px;font-weight:600;color:var(--ice);">${loc}</div>
+        <div style="font-size:11px;color:var(--muted);">${s.count} รายงาน · High Risk: ${s.high}</div>
+      </div>
+      <div style="font-size:18px;font-weight:900;color:${s.high>2?'var(--red)':s.high>0?'var(--amber)':'var(--green)'};">${s.high>2?'🔴':s.high>0?'🟡':'🟢'}</div>
+    </div>`).join('')
+  : '<div style="color:var(--muted);font-size:12px;text-align:center;padding:16px;">ยังไม่มีข้อมูล</div>';
+}
+function anRenderRespTime(reports) {
+  const el = document.getElementById('an-resp-list'); if (!el) return;
+  const verified = reports.filter(r => r.verified_date && r.date);
+  const times = verified.map(r => {
+    const parse = s => { const m=s.match(/^(\d{4})-(\d{2})-(\d{2})/); return m?new Date(parseInt(m[1])-543,parseInt(m[2])-1,parseInt(m[3])):null; };
+    const d1=parse(r.date), d2=parse(r.verified_date);
+    return d1&&d2 ? (d2-d1)/3600000 : null;
+  }).filter(v=>v!==null&&v>=0);
+  if (!times.length) { el.innerHTML='<div style="color:var(--muted);font-size:12px;padding:8px;">ยังไม่มีข้อมูล</div>'; return; }
+  const avg = times.reduce((s,v)=>s+v,0)/times.length;
+  const sla = times.filter(v=>v<=48).length;
+  document.getElementById('an-avg-resp').textContent = avg.toFixed(1);
+  document.getElementById('an-sla').textContent = Math.round(sla/times.length*100)+'%';
+  const maxT = Math.max(...times, 1);
+  el.innerHTML = verified.slice(0,4).map((r,i) => {
+    const h = times[i]?.toFixed(1)||'—';
+    const col = times[i]<=24?'var(--green)':times[i]<=48?'var(--amber)':'var(--red)';
+    return `<div class="rt-row"><span class="rt-lbl">${r.id}</span>
+      <div class="rt-bar-bg"><div class="rt-bar-fill" style="width:${times[i]/maxT*100}%;background:${col};"></div></div>
+      <span class="rt-val" style="color:${col};">${h}ชม.</span></div>`;
+  }).join('');
+}
+
+// ══ SETTINGS ══
+const ST_CLAUDE_KEY = 'sv_claude_key';
+
+function stLoad() {
+  const claudeKey = localStorage.getItem(ST_CLAUDE_KEY) || '';
+  document.getElementById('st-claude-key').value = claudeKey;
+  stUpdateStatus();
+}
+
+function stUpdateStatus() {
+  const claudeKey = localStorage.getItem(ST_CLAUDE_KEY) || '';
+  const hasC = claudeKey.startsWith('sk-ant');
+  const msg = hasC
+    ? `<span style="color:var(--green)">✅ Claude API Key พร้อมใช้งาน</span>`
+    : `<span style="color:var(--red)">❌ ยังไม่ได้ตั้งค่า Claude API Key — การวิเคราะห์ AI จะไม่ทำงาน</span>`;
+  const el = document.getElementById('st-api-status');
+  if(el) el.innerHTML = `<div class="card" style="padding:12px 16px;font-size:13px;">${msg}</div>`;
+}
+
+function stCheckDirty() {
+  const btn = document.getElementById('st-save-btn');
+  if(btn) btn.textContent = '💾 บันทึกการตั้งค่า';
+}
+
+function stToggleShow(inputId, btn) {
+  const el = document.getElementById(inputId);
+  if(el.type === 'password') { el.type = 'text'; btn.textContent = '🙈'; }
+  else { el.type = 'password'; btn.textContent = '👁'; }
+}
+
+function stSave() {
+  const claudeVal = document.getElementById('st-claude-key').value.trim();
+  if (claudeVal) localStorage.setItem(ST_CLAUDE_KEY, claudeVal);
+  else localStorage.removeItem(ST_CLAUDE_KEY);
+  stUpdateStatus();
+  showToast('✅ บันทึก API Key เรียบร้อย');
+}
+
+function stClear() {
+  if (!confirm('ลบ Claude API Key ออกจากระบบ?')) return;
+  localStorage.removeItem(ST_CLAUDE_KEY);
+  document.getElementById('st-claude-key').value = '';
+  stUpdateStatus();
+  showToast('🗑 ล้าง Key เรียบร้อย', 'amber');
+}
+
+async function stTestClaude() {
+  const key = document.getElementById('st-claude-key').value.trim() || localStorage.getItem(ST_CLAUDE_KEY) || '';
+  const btn = document.getElementById('st-test-claude-btn');
+  const statusEl = document.getElementById('st-claude-status');
+
+  if (!key || !key.startsWith('sk-ant')) {
+    statusEl.innerHTML = '<span style="color:var(--red)">❌ กรุณากรอก Claude API Key ก่อน</span>';
+    return;
+  }
+  btn.disabled = true;
+  btn.textContent = '⏳ กำลังทดสอบ...';
+  statusEl.innerHTML = '';
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json', 'x-api-key': key, 'anthropic-version':'2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify({ model:'claude-haiku-4-5-20251001', max_tokens:20, messages:[{role:'user',content:'reply: ok'}] })
+    });
+    if (res.ok) {
+      statusEl.innerHTML = '<span style="color:var(--green)">✅ Key ถูกต้อง พร้อมใช้งาน</span>';
+    } else {
+      const err = await res.json();
+      statusEl.innerHTML = `<span style="color:var(--red)">❌ Key ไม่ถูกต้อง: ${err?.error?.message || res.status}</span>`;
+    }
+  } catch(e) {
+    statusEl.innerHTML = `<span style="color:var(--red)">❌ เชื่อมต่อไม่ได้: ${e.message}</span>`;
+  }
+  btn.disabled = false;
+  btn.textContent = '🧪 ทดสอบ Key';
+}
+
+// ══ LOGOUT ══
+function doLogout(){sessionStorage.clear();location.href='index.html';}
+function goBack(){location.href='index.html';}
+
+// ══ UTILS ══
+function fd(s){if(!s)return'';const months=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];const m=String(s).match(/^(\d{4})-(\d{2})-(\d{2})/);if(m)return `${parseInt(m[3])} ${months[parseInt(m[2])-1]} ${parseInt(m[1])}`;const d=new Date(s.replace(/-/g,'/'));if(isNaN(d))return s;return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()+543}`;}
+function showToast(msg,type=''){const t=document.getElementById('toast');t.textContent=msg;t.className=`toast show${type?' '+type:''}`;setTimeout(()=>t.classList.remove('show'),3500);}
+</script>
+</body>
+</html>
