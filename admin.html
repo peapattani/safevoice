@@ -255,15 +255,48 @@ body{font-family:'Sarabun',sans-serif;background:var(--navy);color:var(--white);
       <div class="panel-title">Dashboard</div>
       <div class="panel-sub">ภาพรวมความปลอดภัย กฟจ.ปัตตานี</div>
       <div class="stats-row" id="db-stats"></div>
-      <div class="card">
-        <div class="section-label">📊 Heinrich's Triangle</div>
-        <div class="htri">
-          <div class="hrow maj"><span style="flex:1;text-align:center;font-size:12px;font-weight:700;color:var(--red)">Major Accident</span><span style="font-size:20px;font-weight:900;color:var(--red)" id="h-maj">0</span></div>
-          <div class="hrow min"><span style="flex:1;text-align:center;font-size:12px;font-weight:700;color:var(--amber)">Minor Incident</span><span style="font-size:20px;font-weight:900;color:var(--amber)" id="h-min">0</span></div>
-          <div class="hrow nea"><span style="flex:1;text-align:center;font-size:12px;font-weight:700;color:var(--green)">Near Miss Reports</span><span style="font-size:20px;font-weight:900;color:var(--green)" id="h-nea">0</span></div>
+      <div class="card" style="padding:14px 18px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <div class="section-label" style="margin:0;">📊 Heinrich's Triangle</div>
+          <span style="font-size:10px;color:var(--muted);">1 : 29 : 300</span>
         </div>
-        <div style="font-size:11px;color:var(--muted);text-align:center;margin-top:8px;">ทุก 300 Near Miss ที่ถูกแก้ไข = ป้องกันอุบัติเหตุใหญ่ 1 ครั้ง</div>
+        <div style="display:flex;gap:8px;">
+          <div style="flex:1;background:#ef444422;border:1px solid #ef444455;border-radius:8px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;">
+            <div>
+              <div style="font-size:9px;font-weight:700;color:var(--red);letter-spacing:1px;">MAJOR</div>
+              <div style="font-size:9px;color:var(--muted);margin-top:1px;">อุบัติเหตุใหญ่</div>
+            </div>
+            <span style="font-size:24px;font-weight:900;color:var(--red);line-height:1;" id="h-maj">0</span>
+          </div>
+          <div style="flex:1;background:#f59e0b22;border:1px solid #f59e0b44;border-radius:8px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;">
+            <div>
+              <div style="font-size:9px;font-weight:700;color:var(--amber);letter-spacing:1px;">MINOR</div>
+              <div style="font-size:9px;color:var(--muted);margin-top:1px;">เหตุการณ์เล็กน้อย</div>
+            </div>
+            <span style="font-size:24px;font-weight:900;color:var(--amber);line-height:1;" id="h-min">0</span>
+          </div>
+          <div style="flex:1;background:#00c96a22;border:1px solid #00c96a44;border-radius:8px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;">
+            <div>
+              <div style="font-size:9px;font-weight:700;color:var(--green);letter-spacing:1px;">NEAR MISS</div>
+              <div style="font-size:9px;color:var(--muted);margin-top:1px;">รายงานทั้งหมด</div>
+            </div>
+            <span style="font-size:24px;font-weight:900;color:var(--green);line-height:1;" id="h-nea">0</span>
+          </div>
+        </div>
+        <div style="font-size:10px;color:var(--muted);margin-top:8px;">💡 ทุก 300 Near Miss ที่ถูกแก้ไข = ป้องกันอุบัติเหตุใหญ่ได้ 1 ครั้ง</div>
       </div>
+
+      <!-- WARNING SUMMARY CARD -->
+      <div class="card" id="db-warn-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <div class="section-label" style="margin:0">⚠️ สรุปใบเตือนพนักงาน</div>
+          <button class="btn-sm" onclick="go('warnings')">จัดการ →</button>
+        </div>
+        <div id="db-warn-body">
+          <div style="color:var(--muted);font-size:12px;text-align:center;padding:12px;">กำลังโหลด...</div>
+        </div>
+      </div>
+
       <!-- ANALYTICS (รวมใน Dashboard) -->
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;margin-top:8px;">
         <div style="font-size:12px;font-weight:700;color:var(--amber);letter-spacing:1px;">📊 Analytics</div>
@@ -859,6 +892,54 @@ function renderDash(){
   document.getElementById('h-min').textContent=minH;
   document.getElementById('h-maj').textContent=majH;
   dbRenderWarnings();
+}
+
+// ══ DASHBOARD WARNING SUMMARY ══
+function dbRenderWarnings() {
+  const el = document.getElementById('db-warn-body');
+  if (!el) return;
+  const active = DB.warnings.filter(w => w.status === 'active');
+  const total = active.length;
+
+  const empCount = {};
+  active.forEach(w => {
+    const key = w.emp_id;
+    if (!empCount[key]) empCount[key] = { name: w.emp_name, count: 0 };
+    empCount[key].count++;
+  });
+  const top3 = Object.values(empCount).sort((a,b) => b.count - a.count).slice(0, 3);
+
+  if (total === 0) {
+    el.innerHTML = '<div style="color:var(--green);text-align:center;padding:16px;font-size:13px;">✅ ไม่มีใบเตือน active ในระบบ</div>';
+    return;
+  }
+
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--border);">
+      <div style="text-align:center;">
+        <div style="font-size:36px;font-weight:900;color:var(--red);line-height:1;">${total}</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:3px;">ใบเตือน active</div>
+      </div>
+      <div style="flex:1;">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:6px;">พนักงานที่มีใบเตือน: <span style="color:var(--white);font-weight:700;">${Object.keys(empCount).length} คน</span></div>
+        <div style="background:var(--navy);border-radius:6px;height:6px;overflow:hidden;">
+          <div style="height:100%;background:linear-gradient(90deg,var(--red),var(--amber));border-radius:6px;width:${Math.min(100, total * 10)}%;"></div>
+        </div>
+      </div>
+    </div>
+    <div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:1.5px;margin-bottom:8px;">TOP พนักงานที่มีใบเตือนมากสุด</div>
+    ${top3.map((e, i) => {
+      const colors = ['var(--red)', 'var(--amber)', 'var(--muted)'];
+      const icons = ['🥇', '🥈', '🥉'];
+      return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
+        <span style="font-size:14px;">${icons[i]}</span>
+        <div style="flex:1;font-size:13px;font-weight:600;color:var(--ice);">${e.name}</div>
+        <div style="background:#ef444422;border:1px solid #ef444455;border-radius:20px;padding:2px 10px;">
+          <span style="font-size:13px;font-weight:900;color:${colors[i]};">${e.count}</span>
+          <span style="font-size:10px;color:var(--muted);"> ใบ</span>
+        </div>
+      </div>`;
+    }).join('')}`;
 }
 
 // ══ VERIFY ══
