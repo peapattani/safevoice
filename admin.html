@@ -301,7 +301,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--navy);color:var(--white);
       <div class="card" id="db-leader-card">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
           <div class="section-label" style="margin:0">🏅 Leaderboard — Credits สะสม</div>
-          <span style="font-size:10px;color:var(--muted);">Top 5 พนักงาน</span>
+          <span style="font-size:10px;color:var(--muted);">Top 3 พนักงาน</span>
         </div>
         <div id="db-leader-body">
           <div style="color:var(--muted);font-size:12px;text-align:center;padding:12px;">กำลังโหลด...</div>
@@ -962,27 +962,23 @@ function renderLeaderboard() {
   const top = DB.employees
     .filter(e => e.role === 'employee' && e.credits > 0)
     .sort((a, b) => b.credits - a.credits)
-    .slice(0, 5);
+    .slice(0, 3);
 
   if (!top.length) {
     el.innerHTML = '<div style="color:var(--muted);font-size:12px;text-align:center;padding:16px;">ยังไม่มีพนักงานสะสม Credits</div>';
     return;
   }
 
-  const medals = ['🥇','🥈','🥉','4️⃣','5️⃣'];
+  const medals = ['🥇','🥈','🥉'];
   const maxCredits = top[0].credits || 1;
 
   el.innerHTML = top.map((e, i) => {
     const pct = Math.round((e.credits / maxCredits) * 100);
     const isFirst = i === 0;
-    const barColor = i === 0 ? 'var(--gold)' : i === 1 ? '#C0C0C0' : i === 2 ? '#CD7F32' : 'var(--green)';
-    // ตัด honorific สำหรับ avatar
-    const shortName = e.name.replace(/^(นาย|นาง|น\.ส\.|ว่าที่ร้อยตรี|ว่าที่ร้อยโท|ดร\.)\s?/, '').trim();
-    const initials = shortName.charAt(0);
+    const barColor = i === 0 ? 'var(--gold)' : i === 1 ? '#C0C0C0' : '#CD7F32';
     return `
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:${i < top.length-1 ? '12px' : '0'};${isFirst ? 'background:#ffd70011;border:1px solid #ffd70033;border-radius:10px;padding:8px 10px;margin-left:-2px;margin-right:-2px;' : ''}">
       <div style="font-size:${isFirst ? '22px' : '18px'};width:28px;text-align:center;flex-shrink:0;">${medals[i]}</div>
-      <div style="width:32px;height:32px;border-radius:50%;background:${barColor}22;border:1.5px solid ${barColor}66;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:${barColor};flex-shrink:0;">${initials}</div>
       <div style="flex:1;min-width:0;">
         <div style="font-size:13px;font-weight:${isFirst ? '700' : '600'};color:${isFirst ? 'var(--gold)' : 'var(--white)'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${e.name}</div>
         <div style="margin-top:4px;height:5px;background:var(--border);border-radius:3px;overflow:hidden;">
