@@ -886,7 +886,7 @@ function renderDash(){
     <div class="stat-card" onclick="go('verify')" style="cursor:pointer;transition:border-color .2s;${high>0?'border-color:var(--red);box-shadow:0 0 0 1px var(--red)22;':''}" onmouseover="this.style.borderColor='var(--red)'" onmouseout="this.style.borderColor='${high>0?'var(--red)':'var(--border)'}'">
       <div class="stat-num" style="color:var(--red)">${high}</div>
       <div class="stat-lbl">High Risk รอ</div>
-      ${high>0?'<div class="stat-sub" style="color:var(--red)">⚡ เร่งด่วน</div>':'<div class="stat-sub" style="color:var(--green)">✅ ไม่มี</div>'}
+      ${high>0?'<div class="stat-sub" style="color:var(--red)">⚡ เร่งด่วน</div>':''}
     </div>
     <div class="stat-card" onclick="go('verify')" style="cursor:pointer;transition:border-color .2s;" onmouseover="this.style.borderColor='var(--green)'" onmouseout="this.style.borderColor='var(--border)'">
       <div class="stat-num" style="color:var(--green)">${ver}</div>
@@ -941,13 +941,12 @@ function dbRenderWarnings() {
     </div>
     <div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:1.5px;margin-bottom:8px;">TOP พนักงานที่มีใบเตือนมากสุด</div>
     ${top3.map((e, i) => {
-      const colors = ['var(--red)', 'var(--amber)', 'var(--muted)'];
-      const icons = ['🥇', '🥈', '🥉'];
+      const rankColors = ['var(--red)', 'var(--amber)', 'var(--muted)'];
       return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
-        <span style="font-size:14px;">${icons[i]}</span>
+        <span style="font-size:11px;font-weight:700;color:${rankColors[i]};width:16px;text-align:center;">${i+1}.</span>
         <div style="flex:1;font-size:13px;font-weight:600;color:var(--ice);">${e.name}</div>
         <div style="background:#ef444422;border:1px solid #ef444455;border-radius:20px;padding:2px 10px;">
-          <span style="font-size:13px;font-weight:900;color:${colors[i]};">${e.count}</span>
+          <span style="font-size:13px;font-weight:900;color:${rankColors[i]};">${e.count}</span>
           <span style="font-size:10px;color:var(--muted);"> ใบ</span>
         </div>
       </div>`;
