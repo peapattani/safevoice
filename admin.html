@@ -486,38 +486,21 @@ body{font-family:'Sarabun',sans-serif;background:var(--navy);color:var(--white);
     <!-- SETTINGS -->
     <div class="tab-panel" id="p-settings">
       <div class="panel-title">ตั้งค่าระบบ</div>
-      <div class="panel-sub">จัดการ API Keys สำหรับการวิเคราะห์ด้วย AI</div>
+      <div class="panel-sub">การวิเคราะห์ AI ทำงานผ่าน Supabase Edge Function</div>
 
-      <!-- สถานะ Key -->
-      <div id="st-api-status" style="margin-bottom:16px;"></div>
-
-      <!-- Claude API Key -->
+      <!-- Claude AI Status -->
       <div class="card">
         <div class="section-label">🤖 CLAUDE AI — วิเคราะห์ Near Miss</div>
-        <div class="fg">
-          <label class="fl">Claude API Key</label>
-          <div style="position:relative;">
-            <input class="fi" id="st-claude-key" type="password"
-              placeholder="sk-ant-api03-..."
-              style="padding-right:44px;"
-              oninput="stCheckDirty()">
-            <button onclick="stToggleShow('st-claude-key',this)"
-              style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--muted);font-size:16px;padding:4px;"
-              title="แสดง/ซ่อน key">👁</button>
-          </div>
-          <div style="font-size:11px;color:var(--muted);margin-top:5px;">ใช้สำหรับวิเคราะห์ความเสี่ยงและจัดหมวดหมู่รายงาน Near Miss อัตโนมัติ</div>
+        <div style="font-size:13px;color:var(--muted);margin-bottom:14px;line-height:1.6;">
+          API Key ถูกเก็บไว้ใน Supabase Secrets ฝั่ง server<br>
+          <span style="color:var(--ice);">พนักงานทุกคน ทุกอุปกรณ์ใช้งานได้โดยอัตโนมัติ</span>
         </div>
-        <div id="st-claude-status" style="font-size:12px;margin-top:2px;margin-bottom:10px;"></div>
-        <button class="btn-sm" onclick="stTestClaude()" id="st-test-claude-btn">🧪 ทดสอบ Key</button>
+        <div id="st-claude-status" style="font-size:13px;margin-bottom:14px;"></div>
+        <button class="btn-sm" onclick="stTestClaude()" id="st-test-claude-btn">🧪 ทดสอบการเชื่อมต่อ</button>
       </div>
 
-      <!-- Save button -->
-      <div style="display:flex;gap:10px;align-items:center;">
-        <button class="btn-prim" onclick="stSave()" id="st-save-btn">💾 บันทึกการตั้งค่า</button>
-        <button class="btn-d" onclick="stClear()">🗑 ล้าง Keys ทั้งหมด</button>
-      </div>
       <div style="font-size:11px;color:var(--muted);margin-top:10px;">
-        🔒 API Keys ถูกเก็บใน localStorage ของเบราว์เซอร์นี้เท่านั้น ไม่ได้ส่งไปยัง server ใด
+        🔒 API Key ไม่เคยส่งมายัง browser — ทำงานผ่าน Edge Function เท่านั้น
       </div>
     </div>
 
@@ -1703,80 +1686,50 @@ function anRenderRespTime(reports) {
 }
 
 // ══ SETTINGS ══
-const ST_CLAUDE_KEY = 'sv_claude_key';
+const SUPABASE_URL    = 'https://kgcnuelqgawslfcfzdcd.supabase.co';
+const SUPABASE_ANON   = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtnY251ZWxxZ2F3c2xmY2Z6ZGNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQyNDg1NzgsImV4cCI6MjA4OTgyNDU3OH0.xlVn5RYNgfHf87tUYyMyMJWIGvLCD085y1g3EMEAf-Q';
 
 function stLoad() {
-  const claudeKey = localStorage.getItem(ST_CLAUDE_KEY) || '';
-  document.getElementById('st-claude-key').value = claudeKey;
+  // ไม่ต้องโหลด key แล้ว — แสดงสถานะ Edge Function อัตโนมัติ
   stUpdateStatus();
 }
 
 function stUpdateStatus() {
-  const claudeKey = localStorage.getItem(ST_CLAUDE_KEY) || '';
-  const hasC = claudeKey.startsWith('sk-ant');
-  const msg = hasC
-    ? `<span style="color:var(--green)">✅ Claude API Key พร้อมใช้งาน</span>`
-    : `<span style="color:var(--red)">❌ ยังไม่ได้ตั้งค่า Claude API Key — การวิเคราะห์ AI จะไม่ทำงาน</span>`;
-  const el = document.getElementById('st-api-status');
-  if(el) el.innerHTML = `<div class="card" style="padding:12px 16px;font-size:13px;">${msg}</div>`;
-}
-
-function stCheckDirty() {
-  const btn = document.getElementById('st-save-btn');
-  if(btn) btn.textContent = '💾 บันทึกการตั้งค่า';
-}
-
-function stToggleShow(inputId, btn) {
-  const el = document.getElementById(inputId);
-  if(el.type === 'password') { el.type = 'text'; btn.textContent = '🙈'; }
-  else { el.type = 'password'; btn.textContent = '👁'; }
-}
-
-function stSave() {
-  const claudeVal = document.getElementById('st-claude-key').value.trim();
-  if (claudeVal) localStorage.setItem(ST_CLAUDE_KEY, claudeVal);
-  else localStorage.removeItem(ST_CLAUDE_KEY);
-  stUpdateStatus();
-  showToast('✅ บันทึก API Key เรียบร้อย');
-}
-
-function stClear() {
-  if (!confirm('ลบ Claude API Key ออกจากระบบ?')) return;
-  localStorage.removeItem(ST_CLAUDE_KEY);
-  document.getElementById('st-claude-key').value = '';
-  stUpdateStatus();
-  showToast('🗑 ล้าง Key เรียบร้อย', 'amber');
+  const el = document.getElementById('st-claude-status');
+  if(el) el.innerHTML = `<span style="color:var(--muted);">คลิก "ทดสอบการเชื่อมต่อ" เพื่อตรวจสอบ Edge Function</span>`;
 }
 
 async function stTestClaude() {
-  const key = document.getElementById('st-claude-key').value.trim() || localStorage.getItem(ST_CLAUDE_KEY) || '';
   const btn = document.getElementById('st-test-claude-btn');
   const statusEl = document.getElementById('st-claude-status');
-
-  if (!key || !key.startsWith('sk-ant')) {
-    statusEl.innerHTML = '<span style="color:var(--red)">❌ กรุณากรอก Claude API Key ก่อน</span>';
-    return;
-  }
   btn.disabled = true;
   btn.textContent = '⏳ กำลังทดสอบ...';
   statusEl.innerHTML = '';
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/claude-proxy`, {
       method: 'POST',
-      headers: { 'Content-Type':'application/json', 'x-api-key': key, 'anthropic-version':'2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
-      body: JSON.stringify({ model:'claude-haiku-4-5-20251001', max_tokens:20, messages:[{role:'user',content:'reply: ok'}] })
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON,
+        'Authorization': `Bearer ${SUPABASE_ANON}`
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 20,
+        messages: [{ role: 'user', content: 'reply: ok' }]
+      })
     });
     if (res.ok) {
-      statusEl.innerHTML = '<span style="color:var(--green)">✅ Key ถูกต้อง พร้อมใช้งาน</span>';
+      statusEl.innerHTML = '<span style="color:var(--green)">✅ Edge Function พร้อมใช้งาน — AI วิเคราะห์ได้ทุกอุปกรณ์</span>';
     } else {
-      const err = await res.json();
-      statusEl.innerHTML = `<span style="color:var(--red)">❌ Key ไม่ถูกต้อง: ${err?.error?.message || res.status}</span>`;
+      const err = await res.json().catch(()=>({}));
+      statusEl.innerHTML = `<span style="color:var(--red)">❌ Edge Function ตอบกลับ error: ${err?.error?.message || res.status}</span>`;
     }
   } catch(e) {
     statusEl.innerHTML = `<span style="color:var(--red)">❌ เชื่อมต่อไม่ได้: ${e.message}</span>`;
   }
   btn.disabled = false;
-  btn.textContent = '🧪 ทดสอบ Key';
+  btn.textContent = '🧪 ทดสอบการเชื่อมต่อ';
 }
 
 // ══ LOGOUT ══
