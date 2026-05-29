@@ -568,9 +568,14 @@ body {
       <div class="logo-icon green">🎙</div>
       <div><div class="logo-name">SafeVoice</div><div class="logo-sub">PEA PATTANI</div></div>
     </div>
-    <div class="notif-wrap">
-      <button style="background:var(--card);border:1px solid var(--border);border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;" onclick="navTo('credits')">🔔</button>
-      <div class="notif-dot" id="notifDot" style="display:none;"></div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <button id="btn-gear" onclick="openPwModal()" style="background:var(--card);border:1px solid var(--border);border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" style="color:var(--muted)"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
+      <div class="notif-wrap">
+        <button style="background:var(--card);border:1px solid var(--border);border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;" onclick="navTo('credits')">🔔</button>
+        <div class="notif-dot" id="notifDot" style="display:none;"></div>
+      </div>
     </div>
   </div>
 
@@ -914,6 +919,40 @@ body {
 </div>
 
 
+<!-- PASSWORD CHANGE MODAL -->
+<div class="modal-overlay" id="modal-pw" onclick="if(event.target===this)closePwModal()">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">🔑 เปลี่ยนรหัสผ่าน</div>
+    <div class="modal-sub" id="pw-modal-sub">—</div>
+
+    <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:16px;">
+      <div>
+        <label style="font-size:12px;color:var(--muted);margin-bottom:5px;display:block;">รหัสผ่านปัจจุบัน</label>
+        <input id="pw-current" type="password" placeholder="••••••••"
+          style="width:100%;background:var(--navy);border:1px solid var(--border);border-radius:10px;padding:12px 14px;color:var(--white);font-family:'Sarabun',sans-serif;font-size:15px;outline:none;box-sizing:border-box;">
+      </div>
+      <div>
+        <label style="font-size:12px;color:var(--muted);margin-bottom:5px;display:block;">รหัสผ่านใหม่</label>
+        <input id="pw-new" type="password" placeholder="••••••••"
+          style="width:100%;background:var(--navy);border:1px solid var(--border);border-radius:10px;padding:12px 14px;color:var(--white);font-family:'Sarabun',sans-serif;font-size:15px;outline:none;box-sizing:border-box;">
+      </div>
+      <div>
+        <label style="font-size:12px;color:var(--muted);margin-bottom:5px;display:block;">ยืนยันรหัสผ่านใหม่</label>
+        <input id="pw-confirm" type="password" placeholder="••••••••"
+          style="width:100%;background:var(--navy);border:1px solid var(--border);border-radius:10px;padding:12px 14px;color:var(--white);font-family:'Sarabun',sans-serif;font-size:15px;outline:none;box-sizing:border-box;">
+      </div>
+    </div>
+
+    <div id="pw-error" style="font-size:12px;color:var(--red);margin-bottom:12px;min-height:16px;"></div>
+
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closePwModal()">ยกเลิก</button>
+      <button class="btn-confirm" id="pw-submit-btn" onclick="submitPwChange()">✅ เปลี่ยนรหัสผ่าน</button>
+    </div>
+  </div>
+</div>
+
 <!-- REDEEM MODAL -->
 <div class="modal-overlay" id="modal-redeem" onclick="cCloseModalOutside(event)">
   <div class="modal-sheet">
@@ -946,6 +985,8 @@ body {
 //  CONFIG — ใส่ค่าจริงก่อน deploy
 // ═══════════════════════════════════════════════
 const CFG = {
+  // ── API Key: ดึงจาก localStorage (ตั้งค่าได้ในหน้า Admin → ตั้งค่าระบบ) ──
+  get CLAUDE_KEY() { return localStorage.getItem('sv_claude_key') || ''; },
   SUPABASE_URL:    'https://kgcnuelqgawslfcfzdcd.supabase.co',
   SUPABASE_KEY:    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtnY251ZWxxZ2F3c2xmY2Z6ZGNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQyNDg1NzgsImV4cCI6MjA4OTgyNDU3OH0.xlVn5RYNgfHf87tUYyMyMJWIGvLCD085y1g3EMEAf-Q',
   STORAGE_BUCKET:  'near-miss-photos',
@@ -1205,13 +1246,14 @@ async function doLogin() {
         }
         // ✅ ได้ UUID จริงทันที — ไม่มีปัญหา insert
         APP.loggedUser = {
-          id:       emp.id,          // UUID จริงจาก Supabase ✅
-          emp_code: emp.emp_code,
-          name:     emp.full_name,
-          dept:     emp.department,
-          credits:  emp.credits      || 0,
-          redeems:  emp.total_redeems|| 0,
-          role:     emp.role
+          id:            emp.id,
+          emp_code:      emp.emp_code,
+          name:          emp.full_name,
+          dept:          emp.department,
+          credits:       emp.credits      || 0,
+          redeems:       emp.total_redeems|| 0,
+          role:          emp.role,
+          password_hash: emp.password_hash
         };
         APP.credits = emp.credits || 0;
         await loadMyReportsFromSB();
@@ -1315,6 +1357,78 @@ async function loadMyWarningsFromSB() {
     DB.warnings = [...mapped, ...DB.warnings];
     console.log(`✅ โหลด ${mapped.length} ใบเตือนจาก Supabase`);
   } catch(e) { console.warn('loadMyWarnings error:', e.message); }
+}
+
+// ── เปลี่ยนรหัสผ่าน ──
+function openPwModal() {
+  const user = APP.loggedUser;
+  if (!user) return;
+  document.getElementById('pw-modal-sub').textContent = user.name + ' · ' + (user.emp_code || user.id);
+  document.getElementById('pw-current').value = '';
+  document.getElementById('pw-new').value = '';
+  document.getElementById('pw-confirm').value = '';
+  document.getElementById('pw-error').textContent = '';
+  document.getElementById('pw-submit-btn').disabled = false;
+  document.getElementById('pw-submit-btn').textContent = '✅ เปลี่ยนรหัสผ่าน';
+  const m = document.getElementById('modal-pw');
+  m.style.display = 'flex';
+  requestAnimationFrame(() => m.classList.add('show'));
+}
+
+function closePwModal() {
+  const m = document.getElementById('modal-pw');
+  m.classList.remove('show');
+  setTimeout(() => { m.style.display = 'none'; }, 300);
+}
+
+async function submitPwChange() {
+  const current = document.getElementById('pw-current').value;
+  const newPw   = document.getElementById('pw-new').value;
+  const confirm = document.getElementById('pw-confirm').value;
+  const errEl   = document.getElementById('pw-error');
+  const btn     = document.getElementById('pw-submit-btn');
+
+  errEl.textContent = '';
+
+  // ── validation ──
+  if (!current) { errEl.textContent = '❌ กรุณากรอกรหัสผ่านปัจจุบัน'; return; }
+  if (current !== APP.loggedUser.password_hash) { errEl.textContent = '❌ รหัสผ่านปัจจุบันไม่ถูกต้อง'; return; }
+  if (!newPw || newPw.length < 4) { errEl.textContent = '❌ รหัสผ่านใหม่ต้องมีอย่างน้อย 4 ตัวอักษร'; return; }
+  if (newPw !== confirm) { errEl.textContent = '❌ รหัสผ่านใหม่ไม่ตรงกัน'; return; }
+  if (newPw === current) { errEl.textContent = '❌ รหัสผ่านใหม่ต้องไม่ซ้ำกับรหัสเดิม'; return; }
+
+  btn.disabled = true;
+  btn.textContent = '⏳ กำลังบันทึก...';
+
+  try {
+    const uid   = APP.loggedUser.id;
+    const token = SESSION.load()?.token || CFG.SUPABASE_KEY;
+    const res   = await fetch(`${CFG.SUPABASE_URL}/rest/v1/employees?id=eq.${uid}`, {
+      method:  'PATCH',
+      headers: {
+        'Content-Type':  'application/json',
+        'apikey':        CFG.SUPABASE_KEY,
+        'Authorization': `Bearer ${token}`,
+        'Prefer':        'return=minimal'
+      },
+      body: JSON.stringify({ password_hash: newPw })
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err?.message || `HTTP ${res.status}`);
+    }
+
+    // อัปเดต session ในหน่วยความจำด้วย
+    APP.loggedUser.password_hash = newPw;
+
+    closePwModal();
+    showToast('✅ เปลี่ยนรหัสผ่านเรียบร้อย');
+  } catch(e) {
+    errEl.textContent = `❌ บันทึกไม่ได้: ${e.message}`;
+    btn.disabled = false;
+    btn.textContent = '✅ เปลี่ยนรหัสผ่าน';
+  }
 }
 
 // ── Logout ──
