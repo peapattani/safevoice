@@ -1007,8 +1007,14 @@ function renderVerify(){
     let actions='';
     if(r.status==='pending'){
       const bon=r.risk==='High'?50:r.risk==='Medium'?25:10;
-      actions=`<div class="rc-actions">
+      actions=`<div class="rc-actions" style="align-items:center;">
         <button class="btn-v" onclick="doVer('${r.id}')">✅ ยืนยัน</button>
+        <div style="display:flex;align-items:center;gap:5px;background:var(--navy);border:1px solid #ffd70066;border-radius:8px;padding:5px 10px;flex-shrink:0;">
+          <span style="font-size:11px;color:var(--gold);">⭐</span>
+          <input type="number" id="cr-${r.id}" value="${r.credits}" min="0" max="500" step="10"
+            style="width:56px;background:transparent;border:none;color:var(--gold);font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;text-align:center;outline:none;">
+          <span style="font-size:10px;color:var(--muted);">cr</span>
+        </div>
         <button class="btn-r" onclick="showRej('${r.id}')">✗ ปฏิเสธ</button>
         <button class="btn-d" onclick="toggleAI('${r.id}')">รายละเอียด</button>
       </div>
@@ -1061,22 +1067,27 @@ async function doVer(id){
   const r=DB.reports.find(x=>x.id===id); if(!r) return;
   const today = new Date().toISOString();
 
+  // อ่าน credits จาก input ที่ admin อาจแก้ไว้
+  const inputEl = document.getElementById(`cr-${id}`);
+  const finalCredits = inputEl ? Math.max(0, parseInt(inputEl.value) || 0) : r.credits;
+
   const adminName = (()=>{ try{ return JSON.parse(sessionStorage.getItem('sv_session')||'{}').user_name||'จป.'; }catch{ return 'จป.'; } })();
-  // 1) อัปเดต status ของรายงาน
+  // 1) อัปเดต status ของรายงาน + credits_given ที่ admin กำหนด
   const ok = await sbPatch('near_miss_reports', r._uuid, {
-    status:      'verified',
-    verified_at: today,
-    verified_by: adminName
+    status:        'verified',
+    verified_at:   today,
+    verified_by:   adminName,
+    credits_given: finalCredits
   });
   if(!ok){ showToast('❌ บันทึกไม่สำเร็จ','red'); return; }
 
   // 2) บวก credits ให้พนักงานใน Supabase + บันทึก credit_transactions
-  if(!r.is_anon && r.credits > 0) {
+  if(!r.is_anon && finalCredits > 0) {
     const emp = DB.employees.find(x => x.id === r.emp_id);
     console.log('doVer emp found:', emp, 'r.emp_id:', r.emp_id);
-    console.log('emp._uuid:', emp?._uuid, 'newCredits:', (emp?.credits||0) + r.credits);
+    console.log('emp._uuid:', emp?._uuid, 'newCredits:', (emp?.credits||0) + finalCredits);
     if(emp && emp._uuid) {
-      const newCredits = (emp.credits || 0) + r.credits;
+      const newCredits = (emp.credits || 0) + finalCredits;
       // patch employees.credits
       const patchOk = await sbPatch('employees', emp._uuid, { credits: newCredits });
       console.log('patch employees result:', patchOk);
@@ -1090,9 +1101,9 @@ async function doVer(id){
           body: JSON.stringify({
             employee_id:   emp._uuid,
             type:          'earn',
-            amount:        r.credits,
+            amount:        finalCredits,
             balance_after: newCredits,
-            description:   `ยืนยันรายงาน ${r.id} — ${r.risk} Risk`,
+            description:   `ยืนยันรายงาน ${r.id} — ${r.risk} Risk${finalCredits !== r.credits ? ` (จป.ปรับจาก ${r.credits})` : ''}`,
             report_id:     r._uuid
           })
         });
@@ -1103,9 +1114,10 @@ async function doVer(id){
     }
   }
 
+  r.credits = finalCredits;
   r.status='verified'; r.verified_date=today.split('T')[0]; r.verified_by=adminName;
   renderVerify(); renderDash(); renderCredits(); updateBadge();
-  showToast(`✅ ยืนยัน ${id} — +${r.credits} Credits`);
+  showToast(`✅ ยืนยัน ${id} — +${finalCredits} Credits`);
 }
 
 async function doRej(id){
