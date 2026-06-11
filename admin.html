@@ -1528,7 +1528,9 @@ function anFilterPeriod(reports, months) {
     if (!r.date) return false;
     const m = r.date.match(/^(\d{4})-(\d{2})-(\d{2})/);
     if (!m) return false;
-    const d = new Date(parseInt(m[1])-543, parseInt(m[2])-1, parseInt(m[3]));
+    // date จาก Supabase (created_at) เป็น ค.ศ. ไม่ต้องลบ 543
+    const year = parseInt(m[1]);
+    const d = new Date(year, parseInt(m[2])-1, parseInt(m[3]));
     return d >= cutoff;
   });
 }
@@ -1543,7 +1545,7 @@ function anRenderTrend(months) {
       if (!r.date) return false;
       const m = r.date.match(/^(\d{4})-(\d{2})/);
       if (!m) return false;
-      const rY = parseInt(m[1]) - 543, rM = parseInt(m[2]) - 1;
+      const rY = parseInt(m[1]), rM = parseInt(m[2]) - 1;
       return rY === d.getFullYear() && rM === d.getMonth();
     }).length;
     data.push(count);
@@ -1619,7 +1621,7 @@ function anRenderHeatmap() {
   const reports = DB.reports.filter(r => APP.anPeriod ? (() => {
     const m = r.date.match(/^(\d{4})-(\d{2})-(\d{2})/);
     if (!m) return false;
-    const d = new Date(parseInt(m[1])-543, parseInt(m[2])-1, parseInt(m[3]));
+    const d = new Date(parseInt(m[1]), parseInt(m[2])-1, parseInt(m[3]));
     const cutoff = new Date(); cutoff.setMonth(cutoff.getMonth() - APP.anPeriod);
     return d >= cutoff;
   })() : true);
@@ -1685,7 +1687,7 @@ function anRenderRespTime(reports) {
   const el = document.getElementById('an-resp-list'); if (!el) return;
   const verified = reports.filter(r => r.verified_date && r.date);
   const times = verified.map(r => {
-    const parse = s => { const m=s.match(/^(\d{4})-(\d{2})-(\d{2})/); return m?new Date(parseInt(m[1])-543,parseInt(m[2])-1,parseInt(m[3])):null; };
+    const parse = s => { const m=s.match(/^(\d{4})-(\d{2})-(\d{2})/); return m?new Date(parseInt(m[1]),parseInt(m[2])-1,parseInt(m[3])):null; };
     const d1=parse(r.date), d2=parse(r.verified_date);
     return d1&&d2 ? (d2-d1)/3600000 : null;
   }).filter(v=>v!==null&&v>=0);
