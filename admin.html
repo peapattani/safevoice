@@ -825,6 +825,8 @@ async function loadReports() {
           verified_by:   r.verified_by  || null,
           verified_date: r.verified_at  ? r.verified_at.split('T')[0] : null,
           reject_reason: r.reject_reason|| null,
+          ai_summary:    r.ai_summary   || null,
+          ai_action:     r.ai_action    || null,
         };
       });
       console.log(`✅ โหลด ${DB.reports.length} รายงานจาก Supabase`);
@@ -1041,8 +1043,13 @@ function renderVerify(){
         </div>
         <div id="ph-${r.id}" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
       </div>` : '<div style="font-size:11px;color:var(--muted);margin-bottom:9px;">📷 ไม่มีรูปภาพ</div>'}
-      <div id="ai-${r.id}" style="display:none;background:var(--navy);border-radius:8px;padding:10px;margin-bottom:9px;font-size:12px;color:var(--muted);">
-        เชื่อม Claude API เพื่อดู AI Analysis จริง
+      <div id="ai-${r.id}" style="display:none;background:var(--navy);border-radius:8px;padding:12px;margin-bottom:9px;">
+        ${r.ai_summary || r.ai_action
+          ? `<div style="font-size:10px;font-weight:700;color:var(--amber);letter-spacing:1px;margin-bottom:8px;">🤖 AI วิเคราะห์ (ข้อความที่แจ้งพนักงาน)</div>
+             ${r.ai_summary ? `<div style="font-size:13px;color:var(--ice);line-height:1.6;margin-bottom:8px;">${r.ai_summary}</div>` : ''}
+             ${r.ai_action  ? `<div style="background:#0D2A1A;border-radius:8px;padding:10px;font-size:13px;color:#7ACF9A;line-height:1.6;"><strong style="color:var(--green);">แนะนำ:</strong> ${r.ai_action}</div>` : ''}`
+          : `<div style="font-size:12px;color:var(--muted);">ไม่มีข้อมูล AI Analysis สำหรับรายงานนี้</div>`
+        }
       </div>
       ${actions}
     </div>`;
