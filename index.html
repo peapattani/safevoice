@@ -2112,7 +2112,7 @@ async function callClaude(text, mode, photoCount) {
     method:'POST',
     headers:{'Content-Type':'application/json','apikey':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtnY251ZWxxZ2F3c2xmY2Z6ZGNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQyNDg1NzgsImV4cCI6MjA4OTgyNDU3OH0.xlVn5RYNgfHf87tUYyMyMJWIGvLCD085y1g3EMEAf-Q','Authorization':'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtnY251ZWxxZ2F3c2xmY2Z6ZGNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQyNDg1NzgsImV4cCI6MjA4OTgyNDU3OH0.xlVn5RYNgfHf87tUYyMyMJWIGvLCD085y1g3EMEAf-Q'},
     body: JSON.stringify({
-      model:'claude-sonnet-4-20250514', max_tokens:800,
+      model:'claude-sonnet-4-6', max_tokens:800,
       system:`คุณคือระบบ AI วิเคราะห์ความปลอดภัยในงานไฟฟ้า PEA ตอบกลับเป็น JSON เท่านั้น ไม่มีข้อความอื่น ไม่มี markdown
 {
   "risk_level": "High|Medium|Low",
