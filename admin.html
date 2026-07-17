@@ -383,6 +383,12 @@ body{font-family:'Sarabun',sans-serif;background:var(--navy);color:var(--white);
         <div class="an-title">📍 จุดเสี่ยงสูง (Hotspot)</div>
         <div id="an-hotspot"></div>
       </div>
+
+      <div class="an-card" style="margin-bottom:14px;">
+        <div class="an-title">🔴 จุดเฝ้าระวังซ้ำซาก</div>
+        <div style="font-size:10px;color:var(--muted);margin-bottom:10px;">อุปกรณ์/พื้นที่เดียวกันที่ถูกรายงานซ้ำภายใน 90 วัน — 🔴 = มีรายงานที่ยังรอตรวจสอบ</div>
+        <div id="an-recurrence"></div>
+      </div>
     </div>
 
     <!-- VERIFY -->
@@ -849,6 +855,7 @@ async function loadReports() {
           reject_reason: r.reject_reason|| null,
           ai_summary:    r.ai_summary   || null,
           ai_action:     r.ai_action    || null,
+          equipment_type: r.equipment_type || null,
         };
       });
       console.log(`✅ โหลด ${DB.reports.length} รายงานจาก Supabase`);
@@ -1541,6 +1548,7 @@ function anRenderAll() {
   anRenderDonut(reports);
   anRenderHeatmap();
   anRenderHotspot(reports);
+  anRenderRecurrence();
   anRenderRespTime(reports);
 }
 function anFilterPeriod(reports, months) {
@@ -1638,6 +1646,30 @@ function anRenderDonut(reports) {
       <span style="margin-left:auto;font-size:11px;font-weight:700;color:var(--muted);">${Math.round(n/total*100)}%</span>
     </div>`).join('');
 }
+// ── Trend Velocity: เทียบเดือนนี้ vs เดือนก่อน แยกตาม branch × category ──
+function anTrendDelta(branch, cat) {
+  const parse = s => { const m = s && s.match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? new Date(parseInt(m[1]),parseInt(m[2])-1,parseInt(m[3])) : null; };
+  const now = new Date();
+  const curStart  = new Date(now.getFullYear(), now.getMonth(), 1);
+  const prevStart = new Date(now.getFullYear(), now.getMonth()-1, 1);
+  let cur = 0, prev = 0;
+  DB.reports.forEach(r => {
+    if ((r.branch || 'ไม่ระบุ') !== branch || (r.category || 'ไม่ระบุ') !== cat) return;
+    const d = parse(r.date); if (!d) return;
+    if (d >= curStart) cur++;
+    else if (d >= prevStart && d < curStart) prev++;
+  });
+  return { cur, prev };
+}
+// เกณฑ์: ถ้าฐานเดือนก่อนน้อยกว่า 2 ไม่แสดง % (กันเคส 0→1 = "เพิ่มขึ้น ∞%" ที่เข้าใจผิดได้)
+function anTrendBadge(cur, prev) {
+  if (prev < 2) return cur > prev ? `<span style="font-size:9px;opacity:.85;">ใหม่</span>` : '';
+  const pct = Math.round(((cur - prev) / prev) * 100);
+  if (pct === 0) return '';
+  const up = pct > 0;
+  return `<span style="font-size:9px;opacity:.85;">${up?'▲':'▼'}${Math.abs(pct)}%</span>`;
+}
+
 function anRenderHeatmap() {
   const el = document.getElementById('an-heatmap'); if (!el) return;
   const reports = DB.reports.filter(r => APP.anPeriod ? (() => {
@@ -1680,8 +1712,10 @@ function anRenderHeatmap() {
       <div style="color:var(--ice);display:flex;align-items:center;font-size:10px;font-weight:600;padding-right:4px;">${b.replace('กฟส.','').replace('กฟจ.','')}</div>
       ${cats.map(c => {
         const v = grid[b][c];
-        return `<div class="${getHC(v)}" style="height:30px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;cursor:default;"
-          onmousemove="anShowTip(event,'${b} · ${c}: ${v} รายงาน')" onmouseleave="anHideTip()">${v || ''}</div>`;
+        const trend = v > 0 ? anTrendDelta(b, c) : null;
+        const badge = trend ? anTrendBadge(trend.cur, trend.prev) : '';
+        return `<div class="${getHC(v)}" style="height:38px;border-radius:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:11px;font-weight:700;cursor:default;line-height:1.25;gap:1px;"
+          onmousemove="anShowTip(event,'${b} · ${c}: ${v} รายงาน')" onmouseleave="anHideTip()"><span>${v || ''}</span>${badge}</div>`;
       }).join('')}`).join('')}
   </div>`;
 }
@@ -1705,6 +1739,43 @@ function anRenderHotspot(reports) {
     </div>`).join('')
   : '<div style="color:var(--muted);font-size:12px;text-align:center;padding:16px;">ยังไม่มีข้อมูล</div>';
 }
+// ── Recurrence Detection: อุปกรณ์/พื้นที่เดิมที่ถูกรายงานซ้ำภายในหน้าต่างเวลาที่กำหนด ──
+function anCalcRecurrence(windowDays = 90) {
+  const parse = s => { const m = s && s.match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? new Date(parseInt(m[1]),parseInt(m[2])-1,parseInt(m[3])) : null; };
+  const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - windowDays);
+  const groups = {};
+  DB.reports.forEach(r => {
+    if (!r.equipment_type || r.equipment_type === 'อื่นๆ') return; // ข้ามที่ไม่มีข้อมูล (รายงานเก่า) หรือไม่เจาะจงพอ
+    const d = parse(r.date); if (!d || d < cutoff) return;
+    const key = `${r.branch || 'ไม่ระบุ'}|${r.equipment_type}`;
+    if (!groups[key]) groups[key] = { branch: r.branch || 'ไม่ระบุ', equipment_type: r.equipment_type, reports: [] };
+    groups[key].reports.push(r);
+  });
+  return Object.values(groups)
+    .filter(g => g.reports.length >= 2) // ซ้ำอย่างน้อย 2 ครั้งถึงจะนับว่าเป็นแพทเทิร์น
+    .map(g => ({
+      branch: g.branch,
+      equipment_type: g.equipment_type,
+      count: g.reports.length,
+      hasPending: g.reports.some(r => r.status === 'pending'), // สัญญาณอันตรายสุด: ซ้ำแล้วยังไม่ถูกแก้
+      latestDate: g.reports.reduce((max, r) => (r.date > max ? r.date : max), g.reports[0].date)
+    }))
+    .sort((a, b) => (b.hasPending - a.hasPending) || (b.count - a.count));
+}
+function anRenderRecurrence() {
+  const el = document.getElementById('an-recurrence'); if (!el) return;
+  const groups = anCalcRecurrence(90);
+  el.innerHTML = groups.length ? groups.slice(0, 5).map(g => `
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
+      <div style="flex:1;">
+        <div style="font-size:13px;font-weight:600;color:var(--ice);">${g.equipment_type} · ${g.branch}</div>
+        <div style="font-size:11px;color:var(--muted);">พบซ้ำ ${g.count} ครั้ง ใน 90 วัน · ล่าสุด ${g.latestDate}${g.hasPending ? ' · มีรายงานรอตรวจสอบ' : ''}</div>
+      </div>
+      <div style="font-size:18px;font-weight:900;color:${g.hasPending ? 'var(--red)' : 'var(--amber)'};">${g.hasPending ? '🔴' : '🟡'}</div>
+    </div>`).join('')
+  : '<div style="color:var(--muted);font-size:12px;text-align:center;padding:16px;">ยังไม่พบรูปแบบซ้ำในช่วง 90 วัน</div>';
+}
+
 function anRenderRespTime(reports) {
   const el = document.getElementById('an-resp-list'); if (!el) return;
   const verified = reports.filter(r => r.verified_date && r.date);
