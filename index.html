@@ -2291,7 +2291,7 @@ async function rSubmit() {
     ai_action:     APP.rAiResult.action,
     credits_given: credits,
     photo_count:   APP.rPhotos.length,
-    photo_urls:    photoUrls.filter(Boolean), // path จริงที่อัปโหลดสำเร็จ — ไม่ต้องเดา path ฝั่งแอดมินอีกต่อไป
+    photo_urls:    JSON.stringify(photoUrls.filter(Boolean)), // คอลัมน์เป็น type text — เก็บเป็น JSON string, parse ฝั่ง admin ตอนอ่าน
     status:        'pending'
   };
 
