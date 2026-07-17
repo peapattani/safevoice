@@ -1105,7 +1105,10 @@ const SB = {
         body: file
       }
     );
-    if (!res.ok) { const e = await res.json().catch(()=>({})); throw new Error(e.error || res.status); }
+    if (!res.ok) {
+      const e = await res.json().catch(()=>({}));
+      throw new Error(`[${res.status}] ${e.message || e.error || e.msg || 'upload failed'}`);
+    }
     // คืน public URL
     return `${CFG.SUPABASE_URL}/storage/v1/object/public/${CFG.STORAGE_BUCKET}/${path}`;
   }
@@ -2241,8 +2244,19 @@ async function rSubmit() {
     const token = CFG.SUPABASE_KEY; // ใช้ anon key เสมอสำหรับ Storage upload
 
     // อัปโหลดทีละไฟล์ พร้อม retry 1 ครั้งถ้าพลาด (เครือข่ายช้า/Supabase cold-start)
+    const VALID_EXTS = ['jpg','jpeg','png','webp','gif','heic','heif'];
+    const extFromName = (name) => {
+      const parts = name.split('.');
+      if (parts.length < 2) return null; // ไม่มีจุด = ไม่มีนามสกุล เช่น "101086"
+      const cand = parts.pop().toLowerCase();
+      return VALID_EXTS.includes(cand) ? cand : null;
+    };
+    const extFromMime = (type) => {
+      const m = { 'image/jpeg':'jpg', 'image/png':'png', 'image/webp':'webp', 'image/gif':'gif', 'image/heic':'heic', 'image/heif':'heif' };
+      return m[type] || null;
+    };
     const uploadOne = async (file, i) => {
-      const ext  = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+      const ext  = extFromName(file.name) || extFromMime(file.type) || 'jpg';
       const path = `${reportId}/photo_${i}.${ext}`;
       try {
         photoUrls[i] = await SB.uploadPhoto(file, path, token);
