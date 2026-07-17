@@ -684,6 +684,23 @@ const SB_URL = 'https://kgcnuelqgawslfcfzdcd.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtnY251ZWxxZ2F3c2xmY2Z6ZGNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQyNDg1NzgsImV4cCI6MjA4OTgyNDU3OH0.xlVn5RYNgfHf87tUYyMyMJWIGvLCD085y1g3EMEAf-Q';
 const SB_BUCKET = 'near-miss-photos';
 
+// ── photo_urls จาก DB เป็น type text (JSON string) — ต้อง parse ก่อนใช้ ──
+// รองรับทั้งกรณี string, array จริง (เผื่อเปลี่ยน column type ในอนาคต), null/undefined
+function parsePhotoUrls(val) {
+  if (!val) return [];
+  if (Array.isArray(val)) return val;
+  if (typeof val === 'string') {
+    try {
+      const parsed = JSON.parse(val);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (_) {
+      console.warn('parsePhotoUrls: invalid JSON:', val);
+      return [];
+    }
+  }
+  return [];
+}
+
 // ── สร้าง URL รูปจาก Supabase Storage ──
 function photoUrl(reportCode, idx, ext='jpg') {
   return `${SB_URL}/storage/v1/object/public/${SB_BUCKET}/${reportCode}/photo_${idx}.${ext}`;
@@ -821,7 +838,7 @@ async function loadReports() {
           status:        r.status,
           is_anon:       r.is_anonymous,
           photos:        r.photo_count  || 0,
-          photo_urls:    r.photo_urls   || [],
+          photo_urls:    parsePhotoUrls(r.photo_urls),
           verified_by:   r.verified_by  || null,
           verified_date: r.verified_at  ? r.verified_at.split('T')[0] : null,
           reject_reason: r.reject_reason|| null,
