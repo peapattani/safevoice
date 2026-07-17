@@ -335,7 +335,9 @@ body {
 .transcript-box { background: var(--navy); border: 1px solid var(--border); border-radius: 10px; padding: 12px; text-align: left; margin-top: 12px; display: none; }
 .transcript-box.show { display: block; }
 .t-label { font-size: 9px; color: var(--muted); letter-spacing: 2px; margin-bottom: 5px; }
-.t-text  { font-size: 14px; line-height: 1.7; color: var(--ice); }
+.t-text  { font-size: 14px; line-height: 1.7; color: var(--ice); border-radius: 6px; padding: 2px; }
+.t-text[contenteditable="true"] { outline: none; cursor: text; border: 1px dashed var(--border); padding: 6px; }
+.t-text[contenteditable="true"]:focus { border-color: var(--accent, #4a9eff); background: rgba(255,255,255,0.03); }
 
 .text-input {
   width: 100%; background: var(--navy); border: 1px solid var(--border);
@@ -708,8 +710,8 @@ body {
           </div>
 
           <div class="transcript-box" id="r-transcript-box">
-            <div class="t-label">TRANSCRIPT</div>
-            <div class="t-text" id="r-transcript-text"></div>
+            <div class="t-label" id="r-transcript-label">TRANSCRIPT</div>
+            <div class="t-text" id="r-transcript-text" contenteditable="false" oninput="rOnTranscriptEdit()"></div>
           </div>
         </div>
       </div>
@@ -1630,7 +1632,11 @@ function toggleDashHistory() {
 // ═══════════════════════════════════════════════
 function initReport() {
 
-  APP.rIsAnon = false; APP.rMode = 'voice'; APP.rRecording = false;
+  // iOS: Web Speech API ไม่เสถียร (restart loop ที่ใช้แก้บัค Android มักทำให้ iOS อัดเสียงไม่ได้เลย)
+  // ตั้ง default เป็นโหมดพิมพ์ข้อความสำหรับ iOS โดยอัตโนมัติ — ยังกดสลับไปโหมดเสียงเองได้ ไม่ได้ปิดฟีเจอร์ทิ้ง
+  const defaultMode = (typeof IS_IOS !== 'undefined' && IS_IOS) ? 'text' : 'voice';
+
+  APP.rIsAnon = false; APP.rMode = defaultMode; APP.rRecording = false;
   APP.rTranscript = ''; APP.rPhotos = []; APP.rPhotosB64 = []; APP.rAiResult = null; APP.rAiDemoMode = false; APP.rElapsed = 0; APP.rSpeechFinalIdx = 0;
   APP.rSpeechFinal = ''; APP.rSpeechInterim = ''; APP.rSpeechRec = null;
   clearInterval(APP.rTimerInt);
@@ -1640,9 +1646,9 @@ function initReport() {
     const el = document.getElementById(id);
     if (el) { el.classList.remove('on','active'); }
   });
-  document.getElementById('r-tab-voice').classList.add('active');
-  document.getElementById('r-panel-voice').style.display = '';
-  document.getElementById('r-panel-text').style.display  = 'none';
+  document.getElementById(defaultMode === 'text' ? 'r-tab-text' : 'r-tab-voice').classList.add('active');
+  document.getElementById('r-panel-voice').style.display = defaultMode === 'voice' ? '' : 'none';
+  document.getElementById('r-panel-text').style.display  = defaultMode === 'text'  ? '' : 'none';
   document.getElementById('r-rec-btn').textContent = '🎙';
   document.getElementById('r-rec-btn').classList.remove('recording');
   document.getElementById('r-rec-status').textContent = 'กดปุ่มด้านล่างเพื่อเริ่มบันทึก';
@@ -1698,6 +1704,12 @@ async function rStartRec() {
   APP.rSpeechRec     = null;
   APP.rRecording     = true;
   APP.rElapsed       = 0;
+
+  // ปิดโหมดแก้ไขระหว่างอัดเสียงใหม่ (กันชนกับ live caption ที่กำลังเขียนทับ)
+  const tBox = document.getElementById('r-transcript-text');
+  if (tBox) { tBox.contentEditable = 'false'; }
+  const tLabel = document.getElementById('r-transcript-label');
+  if (tLabel) { tLabel.textContent = 'TRANSCRIPT'; }
 
   dbg('IS_IOS: ' + IS_IOS);
   dbg('SpeechRecognition: ' + !!(window.SpeechRecognition || window.webkitSpeechRecognition));
@@ -1858,10 +1870,20 @@ async function rProcessAudio() {
 
 function rSetTranscript(text) {
   APP.rTranscript = text;
-  document.getElementById('r-transcript-text').textContent = text;
+  const box = document.getElementById('r-transcript-text');
+  box.textContent = text;
+  box.contentEditable = 'true'; // เปิดให้แก้คำผิดได้หลังแปลงเสียงเสร็จ (ไม่ต้องอัดใหม่ทั้งหมด)
+  document.getElementById('r-transcript-label').textContent = 'TRANSCRIPT — แตะข้อความเพื่อแก้ไขคำผิดได้';
   document.getElementById('r-transcript-box').classList.add('show');
   document.getElementById('r-rec-status').textContent = '✓ บันทึกเสร็จแล้ว';
   document.getElementById('r-rec-status').className = 'rec-status done';
+  rCheckReady();
+}
+
+// ── ผู้ใช้แก้ไข transcript ด้วยมือ → sync กลับเข้า APP.rTranscript ──
+function rOnTranscriptEdit() {
+  const box = document.getElementById('r-transcript-text');
+  APP.rTranscript = box.textContent.trim();
   rCheckReady();
 }
 
@@ -2212,28 +2234,50 @@ async function rSubmit() {
 
   const reportId = `NM-${Date.now()}`;
 
-  // ── Upload photos ไป Supabase Storage (non-blocking, best-effort) ──
+  // ── Upload photos ไป Supabase Storage (รอให้เสร็จจริง ไม่ตัดด้วย timeout สั้นๆ) ──
   const photoUrls = [];
+  let photoUploadFailed = false;
   if (CFG.SUPABASE_URL !== 'YOUR_SUPABASE_URL' && APP.rPhotos.length > 0) {
     const token = CFG.SUPABASE_KEY; // ใช้ anon key เสมอสำหรับ Storage upload
-    const uploads = APP.rPhotos.map((file, i) => {
+
+    // อัปโหลดทีละไฟล์ พร้อม retry 1 ครั้งถ้าพลาด (เครือข่ายช้า/Supabase cold-start)
+    const uploadOne = async (file, i) => {
       const ext  = file.name.split('.').pop()?.toLowerCase() || 'jpg';
       const path = `${reportId}/photo_${i}.${ext}`;
-      return SB.uploadPhoto(file, path, token)
-        .then(url => { photoUrls[i] = url; })
-        .catch(e  => console.warn(`Photo ${i} upload failed:`, e.message));
-    });
-    // รอ upload ทุกรูป (timeout 10 วิ)
-    await Promise.race([
-      Promise.allSettled(uploads),
-      new Promise(r => setTimeout(r, 10000))
-    ]);
+      try {
+        photoUrls[i] = await SB.uploadPhoto(file, path, token);
+      } catch (e1) {
+        console.warn(`Photo ${i} upload attempt 1 failed:`, e1.message);
+        if (submitBtn) submitBtn.textContent = `⌛ กำลังอัปโหลดรูป (ลองใหม่)...`;
+        try {
+          photoUrls[i] = await SB.uploadPhoto(file, path, token);
+        } catch (e2) {
+          console.warn(`Photo ${i} upload attempt 2 failed:`, e2.message);
+          photoUploadFailed = true;
+        }
+      }
+    };
+
+    if (submitBtn) submitBtn.textContent = `⌛ กำลังอัปโหลดรูป (0/${APP.rPhotos.length})...`;
+    let doneCount = 0;
+    await Promise.all(APP.rPhotos.map((file, i) =>
+      uploadOne(file, i).then(() => {
+        doneCount++;
+        if (submitBtn) submitBtn.textContent = `⌛ กำลังอัปโหลดรูป (${doneCount}/${APP.rPhotos.length})...`;
+      })
+    ));
+
+    if (photoUploadFailed) {
+      showToast('⚠ อัปโหลดรูปบางส่วนไม่สำเร็จ — จะส่งรายงานต่อโดยไม่มีรูปที่พลาด', 'amber');
+    }
   }
+
+  if (submitBtn) submitBtn.textContent = '⌛ กำลังบันทึกรายงาน...';
 
   // ── payload ตรงกับ schema near_miss_reports 100% ──
   // columns: id, report_code, employee_id(uuid), is_anonymous, report_text,
   //          risk_level, category, ai_summary, ai_action,
-  //          credits_given, photo_count, location_note, status,
+  //          credits_given, photo_count, photo_urls, location_note, status,
   //          verified_by, verified_at, reject_reason, created_at, updated_at
   const isRealUUID = APP.loggedUser?.id && APP.loggedUser.id !== APP.loggedUser.emp_code;
   const payload = {
@@ -2247,15 +2291,22 @@ async function rSubmit() {
     ai_action:     APP.rAiResult.action,
     credits_given: credits,
     photo_count:   APP.rPhotos.length,
+    photo_urls:    photoUrls.filter(Boolean), // path จริงที่อัปโหลดสำเร็จ — ไม่ต้องเดา path ฝั่งแอดมินอีกต่อไป
     status:        'pending'
   };
 
-  // บันทึกลง Supabase (async, ไม่ block UI)
+  // บันทึกลง Supabase — รอผลจริงก่อนแจ้งผู้ใช้ว่าสำเร็จ
   if (CFG.SUPABASE_URL !== 'YOUR_SUPABASE_URL') {
     const token = SESSION.token() || CFG.SUPABASE_KEY; // ใช้ anon key ถ้าไม่มี session
-    SB.insert('near_miss_reports', payload, token)
-      .then(() => console.log('Report saved to Supabase'))
-      .catch(e  => console.warn('Supabase insert failed:', e.message));
+    try {
+      await SB.insert('near_miss_reports', payload, token);
+      console.log('Report saved to Supabase');
+    } catch (e) {
+      console.warn('Supabase insert failed:', e.message);
+      showToast('⚠ บันทึกรายงานไปเซิร์ฟเวอร์ไม่สำเร็จ กรุณาลองส่งใหม่อีกครั้ง', 'red');
+      if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '✅ ส่งรายงาน'; }
+      return; // หยุด ไม่ต้องเคลียร์ฟอร์ม ให้ผู้ใช้กดส่งใหม่ได้
+    }
   }
 
   if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '✅ ส่งรายงาน'; }
