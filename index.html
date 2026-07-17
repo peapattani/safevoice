@@ -1099,8 +1099,10 @@ const SB = {
         headers: {
           'Authorization': `Bearer ${token || CFG.SUPABASE_KEY}`,
           'apikey':        CFG.SUPABASE_KEY,
-          'Content-Type':  file.type || 'image/jpeg',
-          'x-upsert':      'true'
+          'Content-Type':  file.type || 'image/jpeg'
+          // หมายเหตุ: ไม่ใส่ 'x-upsert' เพราะจะบังคับให้ Storage เช็ค UPDATE RLS policy ด้วย
+          // (ซึ่งไม่มี policy นี้อยู่) ทำให้ upload พังแม้ไฟล์จะยังไม่เคยมีอยู่ก่อนเลยก็ตาม
+          // path แต่ละรูปไม่ซ้ำกันอยู่แล้ว (ใช้ reportId ที่มี timestamp) จึงไม่จำเป็นต้อง upsert
         },
         body: file
       }
