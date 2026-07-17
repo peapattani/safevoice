@@ -2097,7 +2097,7 @@ async function rAnalyze() {
     // ทั้ง no_key และ error อื่น → fallback demo เสมอ
     // confidence ปรับตาม context จริง: เสียงหัก 10, ไม่มีรูปหัก 5
     const demoConf = 78 - (APP.rMode === 'voice' ? 10 : 0) - (photoCount === 0 ? 5 : 0);
-    APP.rAiResult = { risk_level:'Medium', category:'อุปกรณ์ชำรุด', summary_th:'พบอุปกรณ์ชำรุดในพื้นที่ปฏิบัติงาน มีความเสี่ยงต่อความปลอดภัยพนักงาน', action:'หยุดใช้อุปกรณ์ทันทีและส่งซ่อม แจ้งหัวหน้างานภายใน 24 ชั่วโมง', credits:50, keywords:['อุปกรณ์','ชำรุด','พื้นที่ปฏิบัติงาน'], risk_keywords:['ชำรุด','เสียหาย'], confidence: demoConf };
+    APP.rAiResult = { risk_level:'Medium', category:'อุปกรณ์ชำรุด', summary_th:'พบอุปกรณ์ชำรุดในพื้นที่ปฏิบัติงาน มีความเสี่ยงต่อความปลอดภัยพนักงาน', action:'หยุดใช้อุปกรณ์ทันทีและส่งซ่อม แจ้งหัวหน้างานภายใน 24 ชั่วโมง', credits:50, keywords:['อุปกรณ์','ชำรุด','พื้นที่ปฏิบัติงาน'], risk_keywords:['ชำรุด','เสียหาย'], confidence: demoConf, equipment_type:'อื่นๆ' };
     APP.rAiDemoMode = true;
   } finally {
     document.getElementById('r-spinner').classList.remove('show');
@@ -2149,7 +2149,8 @@ async function callClaude(text, mode, photoCount) {
   "credits": 20,
   "keywords": ["คำสำคัญ1", "คำสำคัญ2", "คำสำคัญ3"],
   "risk_keywords": ["คำที่บ่งบอกความเสี่ยงสูง"],
-  "confidence": 85
+  "confidence": 85,
+  "equipment_type": "ลูกถ้วย|หม้อแปลง|สายไฟ|เสาไฟฟ้า|อุปกรณ์นิรภัย|เครื่องมือวัด|ป้ายเตือน|ไฟส่องสว่าง|บันได|ยานพาหนะ|อื่นๆ"
 }
 เกณฑ์ credits: Low=20, Medium=50, High=100
 keywords: คำสำคัญ 2-4 คำที่ AI ใช้ในการวิเคราะห์จากข้อความ เช่น ชื่ออุปกรณ์ สถานที่ การกระทำ
@@ -2157,12 +2158,16 @@ risk_keywords: คำหรือวลีที่บ่งบอกควา�
 confidence: ความมั่นใจในการวิเคราะห์ 0-100 — ปรับตามบริบท:
   - input จากเสียง (transcribed): หักสูงสุด 10 คะแนน เพราะอาจฟังผิดหรือขาดคำ
   - ไม่มีรูปประกอบ + High Risk: หัก 5-10 คะแนน เพราะขาดหลักฐานยืนยัน
-  - ข้อมูลชัดเจนครบถ้วน: ให้เต็ม`,
+  - ข้อมูลชัดเจนครบถ้วน: ให้เต็ม
+equipment_type: เลือก "ชนิดอุปกรณ์/สิ่งที่เกี่ยวข้อง" จากลิสต์ที่กำหนดให้เท่านั้น ห้ามสร้างคำใหม่เอง — ใช้สำหรับจับรายงานที่พูดถึงอุปกรณ์ชนิดเดียวกันซ้ำ ถ้าไม่เข้าข่ายอะไรเลยหรือไม่ชัดเจน ให้ตอบ "อื่นๆ"`,
       messages:[{role:'user', content:`Near Miss [${modeLabel}, ${photoContext}]: "${text}"`}]
     })
   });
   const data = await res.json();
-  return JSON.parse((data.content?.[0]?.text||'{}').replace(/```json|```/g,'').trim());
+  const parsed = JSON.parse((data.content?.[0]?.text||'{}').replace(/```json|```/g,'').trim());
+  const VALID_EQUIPMENT = ['ลูกถ้วย','หม้อแปลง','สายไฟ','เสาไฟฟ้า','อุปกรณ์นิรภัย','เครื่องมือวัด','ป้ายเตือน','ไฟส่องสว่าง','บันได','ยานพาหนะ','อื่นๆ'];
+  if (!VALID_EQUIPMENT.includes(parsed.equipment_type)) parsed.equipment_type = 'อื่นๆ';
+  return parsed;
 }
 
 function rShowResult(r) {
@@ -2292,7 +2297,7 @@ async function rSubmit() {
 
   // ── payload ตรงกับ schema near_miss_reports 100% ──
   // columns: id, report_code, employee_id(uuid), is_anonymous, report_text,
-  //          risk_level, category, ai_summary, ai_action,
+  //          risk_level, category, ai_summary, ai_action, equipment_type,
   //          credits_given, photo_count, photo_urls, location_note, status,
   //          verified_by, verified_at, reject_reason, created_at, updated_at
   const isRealUUID = APP.loggedUser?.id && APP.loggedUser.id !== APP.loggedUser.emp_code;
@@ -2305,6 +2310,7 @@ async function rSubmit() {
     category:      APP.rAiResult.category,
     ai_summary:    APP.rAiResult.summary_th,
     ai_action:     APP.rAiResult.action,
+    equipment_type: APP.rAiResult.equipment_type || 'อื่นๆ', // ใช้จับรายงานซ้ำในอนาคต (recurrence detection)
     credits_given: credits,
     photo_count:   APP.rPhotos.length,
     photo_urls:    JSON.stringify(photoUrls.filter(Boolean)), // คอลัมน์เป็น type text — เก็บเป็น JSON string, parse ฝั่ง admin ตอนอ่าน
