@@ -680,7 +680,7 @@ const DB = {
     {id:'W-004',emp_id:'278629',emp_name:'นางนฤมล เจริญพานิช',date:'2567-11-03',issue:'แต่งกายผิดระเบียบ',impact:'ใบเตือนครั้งที่ 1',status:'redeemed',redeemed_date:'2568-01-15'},
   ]
 };
-const APP={vf:'pending',pendingReset:null};
+const APP={vf:'pending',pendingReset:null,vfExtra:null};
 
 // ══ DEMO MODE — สำหรับนำเสนอ ══
 
@@ -870,7 +870,8 @@ async function loadReports() {
 }
 
 // ══ NAV ══
-function go(tab){
+function go(tab, keepFilter){
+  if(tab==='verify' && !keepFilter && APP.vfExtra){ APP.vfExtra = null; renderVerify(); } // เข้า Verify แบบปกติ → เคลียร์ตัวกรองเก่า + รีเฟรชลิสต์
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById(`p-${tab}`)?.classList.add('active');
@@ -1015,24 +1016,47 @@ function renderLeaderboard() {
   }).join('');
 }
 
+// ── escape ค่าที่จะฝังใน onclick เป็น JS string literal (กัน ' ตัดจบ string ก่อนเวลา) ──
+function jsEsc(s) { return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
+
+// ── Drill-down: กดจาก Analytics (Heatmap/Hotspot/Recurrence) ไปแท็บ Verify แบบกรองไว้ให้แล้ว ──
+function drillDown(filter, label) {
+  APP.vfExtra = { ...filter, label };
+  APP.vf = 'all';
+  document.querySelectorAll('.ftab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.ftabs .ftab')[1]?.classList.add('active'); // ปุ่ม "ทั้งหมด" คือลำดับที่ 2
+  go('verify', true);
+  renderVerify();
+}
+function clearVfExtra() {
+  APP.vfExtra = null;
+  renderVerify();
+}
+
 // ══ VERIFY ══
 function vf(f,btn){APP.vf=f;document.querySelectorAll('.ftab').forEach(t=>t.classList.remove('active'));btn.classList.add('active');renderVerify();}
 function renderVerify(){
   const q=(document.getElementById('v-q')?.value||'').toLowerCase();
   const rb={High:'<span class="rb rb-h">⚡ สูง</span>',Medium:'<span class="rb rb-m">⚠ กลาง</span>',Low:'<span class="rb rb-l">✓ ต่ำ</span>'};
   const sb={pending:'<span class="rb-p">⏳ รอ</span>',verified:'<span class="rb-ok">✓ ยืนยัน</span>',rejected:'<span class="rb-no">✗ ปฏิเสธ</span>'};
+  const ex = APP.vfExtra;
   let list=DB.reports.filter(r=>{
     const mf=APP.vf==='all'?true:APP.vf==='high'?r.risk==='High':r.status===APP.vf;
     const ms=!q||r.text.toLowerCase().includes(q)||(r.emp_name||'').toLowerCase().includes(q);
-    return mf&&ms;
+    const mx=!ex||((!ex.branch||r.branch===ex.branch)&&(!ex.category||r.category===ex.category)&&(!ex.equipment_type||r.equipment_type===ex.equipment_type));
+    return mf&&ms&&mx;
   }).sort((a,b)=>{
     if(a.status==='pending'&&b.status!=='pending')return -1;
     if(a.status!=='pending'&&b.status==='pending')return 1;
     return b.id.localeCompare(a.id);
   });
   const el=document.getElementById('v-list');
-  if(!list.length){el.innerHTML='<div style="text-align:center;color:var(--muted);padding:40px;">📋 ไม่พบรายงาน</div>';return;}
-  el.innerHTML=list.map(r=>{
+  const chip = ex ? `<div style="display:flex;align-items:center;gap:8px;background:var(--navy);border:1px solid var(--accent,#4a9eff);border-radius:10px;padding:8px 12px;margin-bottom:10px;">
+    <span style="font-size:12px;color:var(--ice);flex:1;">🔎 กำลังกรอง: <b>${ex.label}</b></span>
+    <button onclick="clearVfExtra()" style="background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;line-height:1;padding:2px 4px;">✕</button>
+  </div>` : '';
+  if(!list.length){el.innerHTML=chip+'<div style="text-align:center;color:var(--muted);padding:40px;">📋 ไม่พบรายงาน</div>';return;}
+  el.innerHTML=chip+list.map(r=>{
     let actions='';
     if(r.status==='pending'){
       const bon=r.risk==='High'?50:r.risk==='Medium'?25:10;
@@ -1714,8 +1738,9 @@ function anRenderHeatmap() {
         const v = grid[b][c];
         const trend = v > 0 ? anTrendDelta(b, c) : null;
         const badge = trend ? anTrendBadge(trend.cur, trend.prev) : '';
-        return `<div class="${getHC(v)}" style="height:38px;border-radius:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:11px;font-weight:700;cursor:default;line-height:1.25;gap:1px;"
-          onmousemove="anShowTip(event,'${b} · ${c}: ${v} รายงาน')" onmouseleave="anHideTip()"><span>${v || ''}</span>${badge}</div>`;
+        const click = v > 0 ? `onclick="drillDown({branch:'${jsEsc(b)}',category:'${jsEsc(c)}'},'${jsEsc(c)} · ${jsEsc(b)}')"` : '';
+        return `<div class="${getHC(v)}" ${click} style="height:38px;border-radius:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:11px;font-weight:700;line-height:1.25;gap:1px;cursor:${v>0?'pointer':'default'};"
+          onmousemove="anShowTip(event,'${b} · ${c}: ${v} รายงาน${v>0?' — คลิกเพื่อดูรายละเอียด':''}')" onmouseleave="anHideTip()"><span>${v || ''}</span>${badge}</div>`;
       }).join('')}`).join('')}
   </div>`;
 }
@@ -1730,7 +1755,7 @@ function anRenderHotspot(reports) {
   });
   const sorted = Object.entries(spots).sort((a,b)=>b[1].high-a[1].high||b[1].count-a[1].count).slice(0,5);
   el.innerHTML = sorted.length ? sorted.map(([loc,s])=>`
-    <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
+    <div onclick="drillDown({category:'${jsEsc(loc)}'},'${jsEsc(loc)}')" style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer;">
       <div style="flex:1;">
         <div style="font-size:13px;font-weight:600;color:var(--ice);">${loc}</div>
         <div style="font-size:11px;color:var(--muted);">${s.count} รายงาน · High Risk: ${s.high}</div>
@@ -1766,7 +1791,7 @@ function anRenderRecurrence() {
   const el = document.getElementById('an-recurrence'); if (!el) return;
   const groups = anCalcRecurrence(90);
   el.innerHTML = groups.length ? groups.slice(0, 5).map(g => `
-    <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
+    <div onclick="drillDown({equipment_type:'${jsEsc(g.equipment_type)}',branch:'${jsEsc(g.branch)}'},'${jsEsc(g.equipment_type)} · ${jsEsc(g.branch)}')" style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer;">
       <div style="flex:1;">
         <div style="font-size:13px;font-weight:600;color:var(--ice);">${g.equipment_type} · ${g.branch}</div>
         <div style="font-size:11px;color:var(--muted);">พบซ้ำ ${g.count} ครั้ง ใน 90 วัน · ล่าสุด ${g.latestDate}${g.hasPending ? ' · มีรายงานรอตรวจสอบ' : ''}</div>
