@@ -387,6 +387,7 @@ body {
   margin-bottom: 10px;
 }
 .qb-full    { background: #00c96a22; border: 1px solid #00c96a55; color: var(--green); }
+.qb-good    { background: #c8e6ff22; border: 1px solid #c8e6ff55; color: var(--ice); }
 .qb-partial { background: #f59e0b22; border: 1px solid #f59e0b55; color: var(--amber); }
 .qb-minimal { background: #ef444422; border: 1px solid #ef444455; color: var(--red); }
 
@@ -2047,14 +2048,14 @@ function qScoreQuality(inputText, aiResult) {
 
   const aiHasAction = aiResult && aiResult.action && aiResult.action.length > 5;
 
-  if (chars >= 50 && (hasAction || aiHasAction) && (hasCause || hasLocation)) {
+  if (chars >= 80 && hasAction && hasCause && hasLocation) {
     quality = 'full';    multiplier = 1.0;  label = '✅ รายงานสมบูรณ์';
+  } else if (chars >= 50 && hasAction && (hasCause || hasLocation)) {
+    quality = 'good';    multiplier = 0.75; label = '👍 รายงานดี — ระบุครบทั้งสาเหตุ สถานที่ และการแก้ไข (ยาวขึ้น) เพื่อรับคะแนนเต็ม';
   } else if (chars >= 25 && (hasAction || aiHasAction)) {
-    quality = 'partial'; multiplier = 0.6;  label = '⚠ รายงานพอใช้ — เพิ่มสาเหตุและสถานที่จะได้คะแนนเต็ม';
-  } else if (chars >= 30 && aiHasAction) {
-    quality = 'partial'; multiplier = 0.6;  label = '⚠ รายงานพอใช้ — เพิ่มสาเหตุและสถานที่จะได้คะแนนเต็ม';
+    quality = 'partial'; multiplier = 0.5;  label = '⚠ รายงานพอใช้ — เพิ่มสาเหตุและสถานที่จะได้คะแนนมากขึ้น';
   } else {
-    quality = 'minimal'; multiplier = 0.25; label = '❌ รายงานสั้นเกินไป — ขาด action และรายละเอียด';
+    quality = 'minimal'; multiplier = 0.2;  label = '❌ รายงานสั้นเกินไป — ขาด action และรายละเอียด';
   }
 
   const rawCredits = aiResult.credits || 0;
@@ -2152,6 +2153,15 @@ async function callClaude(text, mode, photoCount) {
   "confidence": 85,
   "equipment_type": "ลูกถ้วย|หม้อแปลง|สายไฟ|เสาไฟฟ้า|อุปกรณ์นิรภัย|เครื่องมือวัด|ป้ายเตือน|ไฟส่องสว่าง|บันได|ยานพาหนะ|อื่นๆ"
 }
+เกณฑ์ risk_level (ยึดตามนี้อย่างเคร่งครัด):
+High — ต้องเข้าเงื่อนไขครบทั้ง 3 ข้อเท่านั้น:
+  1) มีการสัมผัสหรือเกือบสัมผัสแหล่งอันตรายจริง (ไม่ใช่แค่ "เห็น/พบ" ความผิดปกติเฉยๆ)
+  2) ผลที่อาจเกิดขึ้นคือบาดเจ็บสาหัสหรือเสียชีวิต (เช่น ไฟดูดแรงสูง ตกจากที่สูง ไฟไหม้/ระเบิด ของหนักตกใส่)
+  3) มาตรการป้องกันล้มเหลวหรือไม่มีในขณะนั้น (เช่น PPE ขาด/ไม่ได้สวม/ป้องกันไม่ได้ผล)
+  ขาดข้อใดข้อหนึ่ง = ลดเป็น Medium
+Medium — มีความเสี่ยงจริงแต่ไม่ครบ 3 ข้อ เช่น อุปกรณ์ชำรุดที่ยังไม่มีใครสัมผัส/ใช้งาน หรือมีการสัมผัสแต่ PPE ป้องกันได้ผล
+Low — ไม่กระทบความปลอดภัยโดยตรงทันที เช่น ความเป็นระเบียบทั่วไป ป้ายซีดจาง ไฟส่องสว่างไม่พอ
+ห้ามตัดสิน High เพียงเพราะเป็นบริบทงานไฟฟ้าแรงสูง — ถ้าข้อมูลในรายงานไม่พอสรุปเงื่อนไขครบ ให้เลือกระดับที่ต่ำกว่าไว้ก่อนเสมอ (conservative default)
 เกณฑ์ credits: Low=20, Medium=50, High=100
 keywords: คำสำคัญ 2-4 คำที่ AI ใช้ในการวิเคราะห์จากข้อความ เช่น ชื่ออุปกรณ์ สถานที่ การกระทำ
 risk_keywords: คำหรือวลีที่บ่งบอกความเสี่ยงโดยตรง เช่น "รอยร้าว" "ไม่มีป้าย" "ทำงานบนที่สูง" (ถ้าไม่มีให้ส่ง [])
@@ -2187,7 +2197,7 @@ function rShowResult(r) {
   // Quality Badge
   if (APP.rQualityResult) {
     const q = APP.rQualityResult;
-    const qCls = { full:'qb-full', partial:'qb-partial', minimal:'qb-minimal' }[q.quality];
+    const qCls = { full:'qb-full', good:'qb-good', partial:'qb-partial', minimal:'qb-minimal' }[q.quality];
     const qEl  = document.getElementById('r-quality-badge');
     if (qEl) {
       qEl.innerHTML = `<div class="quality-badge ${qCls}">${q.label}</div>` +
