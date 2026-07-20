@@ -1908,6 +1908,8 @@ function rHandlePhotos(e) {
 
   APP.rPhotos     = valid;        // File objects (สำหรับ upload Supabase)
   APP.rPhotosB64  = [];           // base64 (สำหรับเก็บ local + preview)
+  APP.rSubmitReportId = null;     // ชุดรูปเปลี่ยน → เคลียร์สถานะ retry (index รูปเก่าใช้ต่อไม่ได้)
+  APP.rUploadedUrls   = null;
 
   const prev = document.getElementById('r-photo-preview');
   prev.innerHTML = '';
@@ -1980,6 +1982,8 @@ function rCompressAndPreview(file, idx, previewEl) {
 function rRemovePhoto(idx) {
   APP.rPhotos.splice(idx, 1);
   APP.rPhotosB64.splice(idx, 1);
+  APP.rSubmitReportId = null; // ลบรูป → index เลื่อน เคลียร์สถานะ retry กัน URL ชี้ผิดรูป
+  APP.rUploadedUrls   = null;
   // re-render
   const input = document.getElementById('r-photo-input');
   if (input) input.value = '';
@@ -2252,36 +2256,45 @@ async function rSubmit() {
   const submitBtn = document.querySelector('#r-ai-result .btn-primary');
   if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = '⌛ กำลังส่ง...'; }
 
-  const reportId = `NM-${Date.now()}`;
+  // ── reportId คงเดิมข้าม retry (สร้างครั้งเดียวต่อรายงาน เคลียร์ตอน rReset/เปลี่ยนรูป)
+  // กันไฟล์กำพร้าใน Storage เวลากดส่งซ้ำหลังอัปโหลดพลาด
+  if (!APP.rSubmitReportId) APP.rSubmitReportId = `NM-${Date.now()}`;
+  const reportId = APP.rSubmitReportId;
+  if (!APP.rUploadedUrls) APP.rUploadedUrls = [];
 
-  // ── Upload photos ไป Supabase Storage (รอให้เสร็จจริง ไม่ตัดด้วย timeout สั้นๆ) ──
-  const photoUrls = [];
+  // ── Upload photos ไป Supabase Storage ──
+  // อัปโหลด "รูปที่บีบอัดแล้ว" (จาก rPhotosB64, canvas JPEG ≤1200px ~200KB) แทนไฟล์ต้นฉบับ (สูงสุด 5MB)
+  // → เร็วขึ้นมากบนเน็ตมือถือหน้างาน ลดโอกาสอัปโหลดพลาด + ประหยัดพื้นที่ Storage
+  const photoUrls = APP.rUploadedUrls; // จำ URL ที่สำเร็จแล้วข้าม retry — กดส่งซ้ำจะอัปเฉพาะรูปที่พลาด
   let photoUploadFailed = false;
   if (CFG.SUPABASE_URL !== 'YOUR_SUPABASE_URL' && APP.rPhotos.length > 0) {
     const token = CFG.SUPABASE_KEY; // ใช้ anon key เสมอสำหรับ Storage upload
 
+    // แปลง dataURL (base64) → Blob สำหรับอัปโหลด
+    const b64ToBlob = (dataUrl) => {
+      const [meta, b64] = dataUrl.split(',');
+      const mime = (meta.match(/data:(.*?);/) || [])[1] || 'image/jpeg';
+      const bin  = atob(b64);
+      const arr  = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+      return new Blob([arr], { type: mime });
+    };
+
     // อัปโหลดทีละไฟล์ พร้อม retry 1 ครั้งถ้าพลาด (เครือข่ายช้า/Supabase cold-start)
-    const VALID_EXTS = ['jpg','jpeg','png','webp','gif','heic','heif'];
-    const extFromName = (name) => {
-      const parts = name.split('.');
-      if (parts.length < 2) return null; // ไม่มีจุด = ไม่มีนามสกุล เช่น "101086"
-      const cand = parts.pop().toLowerCase();
-      return VALID_EXTS.includes(cand) ? cand : null;
-    };
-    const extFromMime = (type) => {
-      const m = { 'image/jpeg':'jpg', 'image/png':'png', 'image/webp':'webp', 'image/gif':'gif', 'image/heic':'heic', 'image/heif':'heif' };
-      return m[type] || null;
-    };
-    const uploadOne = async (file, i) => {
-      const ext  = extFromName(file.name) || extFromMime(file.type) || 'jpg';
-      const path = `${reportId}/photo_${i}.${ext}`;
+    const uploadOne = async (i) => {
+      if (photoUrls[i]) return; // รูปนี้สำเร็จไปแล้วรอบก่อน — ข้าม ไม่อัปซ้ำ
+      // ใช้ตัวบีบอัดถ้าพร้อม (compression เป็น async อาจยังไม่เสร็จในเคสหายาก) — fallback ไฟล์ต้นฉบับ
+      const useB64 = !!APP.rPhotosB64[i];
+      const body   = useB64 ? b64ToBlob(APP.rPhotosB64[i]) : APP.rPhotos[i];
+      const blob   = useB64 ? body : new Blob([body], { type: body.type || 'image/jpeg' });
+      const path   = `${reportId}/photo_${i}.jpg`; // บีบอัดเป็น JPEG เสมอ → นามสกุลตายตัว admin fallback หาเจอแน่นอน
       try {
-        photoUrls[i] = await SB.uploadPhoto(file, path, token);
+        photoUrls[i] = await SB.uploadPhoto(blob, path, token);
       } catch (e1) {
         console.warn(`Photo ${i} upload attempt 1 failed:`, e1.message);
         if (submitBtn) submitBtn.textContent = `⌛ กำลังอัปโหลดรูป (ลองใหม่)...`;
         try {
-          photoUrls[i] = await SB.uploadPhoto(file, path, token);
+          photoUrls[i] = await SB.uploadPhoto(blob, path, token);
         } catch (e2) {
           console.warn(`Photo ${i} upload attempt 2 failed:`, e2.message);
           photoUploadFailed = true;
@@ -2291,15 +2304,25 @@ async function rSubmit() {
 
     if (submitBtn) submitBtn.textContent = `⌛ กำลังอัปโหลดรูป (0/${APP.rPhotos.length})...`;
     let doneCount = 0;
-    await Promise.all(APP.rPhotos.map((file, i) =>
-      uploadOne(file, i).then(() => {
+    await Promise.all(APP.rPhotos.map((_, i) =>
+      uploadOne(i).then(() => {
         doneCount++;
         if (submitBtn) submitBtn.textContent = `⌛ กำลังอัปโหลดรูป (${doneCount}/${APP.rPhotos.length})...`;
       })
     ));
 
+    const successCount = photoUrls.filter(Boolean).length;
+
+    // ── พลาด "ทุกรูป" → หยุด ไม่ส่งรายงาน (รูปเป็นหลักฐานบังคับ) ให้กดส่งใหม่ได้ ──
+    // AI ไม่ถูกเรียกซ้ำ (ผลค้างอยู่ใน APP.rAiResult) และรูปที่สำเร็จแล้วจะไม่อัปซ้ำ
+    if (successCount === 0) {
+      showToast('⚠ อัปโหลดรูปไม่สำเร็จ — ตรวจสอบสัญญาณเน็ตแล้วกดส่งอีกครั้ง (ไม่ต้องอัดเสียง/วิเคราะห์ใหม่)', 'red');
+      if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '✅ ส่งรายงาน'; }
+      return;
+    }
+
     if (photoUploadFailed) {
-      showToast('⚠ อัปโหลดรูปบางส่วนไม่สำเร็จ — จะส่งรายงานต่อโดยไม่มีรูปที่พลาด', 'amber');
+      showToast('⚠ อัปโหลดรูปบางส่วนไม่สำเร็จ — ส่งรายงานต่อด้วยรูปที่สำเร็จ', 'amber');
     }
   }
 
@@ -2322,7 +2345,7 @@ async function rSubmit() {
     ai_action:     APP.rAiResult.action,
     equipment_type: APP.rAiResult.equipment_type || 'อื่นๆ', // ใช้จับรายงานซ้ำในอนาคต (recurrence detection)
     credits_given: credits,
-    photo_count:   APP.rPhotos.length,
+    photo_count:   photoUrls.filter(Boolean).length, // นับเฉพาะรูปที่อัปโหลด "สำเร็จจริง" — กัน admin เจอ "ควรมีรูปแต่หาไม่พบ"
     photo_urls:    JSON.stringify(photoUrls.filter(Boolean)), // คอลัมน์เป็น type text — เก็บเป็น JSON string, parse ฝั่ง admin ตอนอ่าน
     status:        'pending'
   };
@@ -2357,8 +2380,8 @@ async function rSubmit() {
     summary:   APP.rAiResult.summary_th,
     action:    APP.rAiResult.action,
     status:    'pending',
-    photos:    APP.rPhotos.length,
-    photoUrls: photoUrls.length ? photoUrls : (APP.rPhotosB64 || []), // local b64 fallback
+    photos:    photoUrls.filter(Boolean).length,
+    photoUrls: photoUrls.filter(Boolean).length ? photoUrls.filter(Boolean) : (APP.rPhotosB64 || []), // local b64 fallback
     is_anon:   APP.rIsAnon
   };
   DB.reports.unshift(newReport);
@@ -2390,6 +2413,8 @@ function rReset() {
   APP.rDupResult     = null;
   APP.rQualityResult = null;
   APP.rDupDismissed  = false;
+  APP.rSubmitReportId = null; // เคลียร์สถานะ retry — รายงานถัดไปได้ reportId ใหม่
+  APP.rUploadedUrls   = null;
   document.getElementById('r-dup-warning').style.display = 'none';
   initReport();
 }
