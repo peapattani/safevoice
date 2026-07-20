@@ -1931,7 +1931,7 @@ function exportPDF() {
   // รายงานที่ verified + action
   const actionRows = monthReports
     .filter(r => r.status === 'verified' || r.status === 'resolved')
-    .map((r,i) => `<tr><td style="text-align:center;">${i+1}</td><td>${r.id}</td><td>${r.emp_name||'นิรนาม'}</td><td style="font-size:9px;">${r.text?.slice(0,50)||'—'}</td><td style="font-size:9px;">${r.action||'—'}</td><td style="text-align:center;">${r.verified_by||'จป.'}</td></tr>`).join('');
+    .map((r,i) => `<tr><td style="text-align:center;">${i+1}</td><td>${r.id}</td><td>${r.emp_name||'นิรนาม'}</td><td style="font-size:9px;">${r.text?.slice(0,50)||'—'}</td><td style="font-size:9px;">${r.ai_action||'—'}</td><td style="text-align:center;">${r.verified_by||'จป.'}</td></tr>`).join('');
 
   // pending
   const pendingRows = monthReports.filter(r=>r.status==='pending')
