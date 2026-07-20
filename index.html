@@ -1536,7 +1536,7 @@ function initDashboard() {
     if (!r.date) return;
     const m2 = r.date.match(/^(\d{4})-(\d{2})/);
     if (!m2) return;
-    const rYearCE = parseInt(m2[1]) - 543;
+    const rYearCE = parseInt(m2[1]) ;
     const rMo     = parseInt(m2[2]) - 1;
     chartMonths.forEach(cm => { if (cm.moIdx === rMo && cm.year === rYearCE) cm.n++; });
   });
