@@ -1076,7 +1076,7 @@ function renderVerify(){
         </div>
       </div>`;
     }else if(r.status==='verified'||r.status==='resolved'){
-      const bon=r.risk==='High'?50:r.risk==='Medium'?25:10;
+      const bon=r.risk==='High'?20:10; // Bonus ขั้น "แก้ไขแล้ว": สูง=+20, กลาง/ต่ำ=+10
       actions=`<div class="done-v">✅ ยืนยันโดย ${r.verified_by||'จป.'} · ${fd(r.verified_date)}</div>
         ${r.status!=='resolved'&&!r.is_anon?`<button class="btn-bonus" onclick="doBonus('${r.id}',${bon})">🔧 แก้ไขแล้ว → Bonus +${bon} Credits</button>`:''}`;
     }else{
