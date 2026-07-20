@@ -730,10 +730,10 @@ body {
     <div class="card">
       <div class="section-label">รูปถ่ายประกอบ <span style="color:var(--red);font-weight:400;">* บังคับทุกรายงาน</span></div>
       <div class="photo-area">
-        <input type="file" id="r-photo-input" accept="image/*" multiple onchange="rHandlePhotos(event)">
+        <input type="file" id="r-photo-input" accept="image/*" onchange="rHandlePhotos(event)">
         <div class="ph-icon">📷</div>
         <div class="ph-label">แตะเพื่อถ่ายรูปหรือเลือกจากคลัง</div>
-        <div class="ph-note">รองรับ JPG, PNG — สูงสุด 3 รูป</div>
+        <div class="ph-note">รองรับ JPG, PNG — 1 รูป (AI ใช้วิเคราะห์ประกอบข้อความ)</div>
       </div>
       <div class="photo-preview" id="r-photo-preview"></div>
     </div>
@@ -1894,7 +1894,7 @@ function rOnTranscriptEdit() {
 }
 
 function rHandlePhotos(e) {
-  const raw   = Array.from(e.target.files).slice(0, 3);
+  const raw   = Array.from(e.target.files).slice(0, 1); // จำกัด 1 รูป — AI วิเคราะห์รูปควบคู่ข้อความ + ประหยัด Storage
   const MAX_MB = 5;
   const valid  = raw.filter(f => {
     if (f.size > MAX_MB * 1024 * 1024) {
@@ -2062,6 +2062,12 @@ function qScoreQuality(inputText, aiResult) {
     quality = 'minimal'; multiplier = 0.2;  label = '❌ รายงานสั้นเกินไป — ขาด action และรายละเอียด';
   }
 
+  // ── รูปไม่สอดคล้องกับข้อความ (AI ตรวจจากรูปจริง) → ตรึงที่ minimal ไม่ว่าข้อความจะดีแค่ไหน ──
+  if (aiResult && aiResult.photo_match === false) {
+    quality = 'minimal'; multiplier = 0.2;
+    label = '📷 รูปไม่สอดคล้องกับเหตุการณ์ที่รายงาน — เปลี่ยนรูปให้ตรงหน้างานแล้ววิเคราะห์ใหม่เพื่อรับคะแนนเต็ม';
+  }
+
   const rawCredits = aiResult.credits || 0;
   const finalCredits = Math.round(rawCredits * multiplier);
 
@@ -2102,7 +2108,7 @@ async function rAnalyze() {
     // ทั้ง no_key และ error อื่น → fallback demo เสมอ
     // confidence ปรับตาม context จริง: เสียงหัก 10, ไม่มีรูปหัก 5
     const demoConf = 78 - (APP.rMode === 'voice' ? 10 : 0) - (photoCount === 0 ? 5 : 0);
-    APP.rAiResult = { risk_level:'Medium', category:'อุปกรณ์ชำรุด', summary_th:'พบอุปกรณ์ชำรุดในพื้นที่ปฏิบัติงาน มีความเสี่ยงต่อความปลอดภัยพนักงาน', action:'หยุดใช้อุปกรณ์ทันทีและส่งซ่อม แจ้งหัวหน้างานภายใน 24 ชั่วโมง', credits:50, keywords:['อุปกรณ์','ชำรุด','พื้นที่ปฏิบัติงาน'], risk_keywords:['ชำรุด','เสียหาย'], confidence: demoConf, equipment_type:'อื่นๆ' };
+    APP.rAiResult = { risk_level:'Medium', category:'อุปกรณ์ชำรุด', summary_th:'พบอุปกรณ์ชำรุดในพื้นที่ปฏิบัติงาน มีความเสี่ยงต่อความปลอดภัยพนักงาน', action:'หยุดใช้อุปกรณ์ทันทีและส่งซ่อม แจ้งหัวหน้างานภายใน 24 ชั่วโมง', credits:50, keywords:['อุปกรณ์','ชำรุด','พื้นที่ปฏิบัติงาน'], risk_keywords:['ชำรุด','เสียหาย'], confidence: demoConf, photo_match:true, photo_findings:'', equipment_type:'อื่นๆ' };
     APP.rAiDemoMode = true;
   } finally {
     document.getElementById('r-spinner').classList.remove('show');
@@ -2138,8 +2144,20 @@ async function rAnalyze() {
 async function callClaude(text, mode, photoCount) {
   const modeLabel    = mode === 'voice' ? 'เสียง (transcribed)' : 'ข้อความ';
   const photoContext = photoCount > 0
-    ? `มีรูปประกอบ ${photoCount} รูป`
+    ? `มีรูปประกอบ ${photoCount} รูป (แนบมาให้วิเคราะห์ด้วย)`
     : 'ไม่มีรูปประกอบ';
+
+  // ── แนบรูปที่บีบอัดแล้ว (base64) ให้ AI วิเคราะห์ควบคู่ข้อความ ──
+  // ใช้ rPhotosB64[0] (JPEG ≤1200px จาก canvas) — ถ้า compression ยังไม่เสร็จ (เคสหายาก) ส่งข้อความอย่างเดียว
+  const userContent = [];
+  const b64 = APP.rPhotosB64 && APP.rPhotosB64[0];
+  if (b64) {
+    userContent.push({
+      type: 'image',
+      source: { type: 'base64', media_type: 'image/jpeg', data: b64.split(',')[1] }
+    });
+  }
+  userContent.push({ type: 'text', text: `Near Miss [${modeLabel}, ${photoContext}]: "${text}"` });
   const res = await fetch('https://kgcnuelqgawslfcfzdcd.supabase.co/functions/v1/claude-proxy', {
     method:'POST',
     headers:{'Content-Type':'application/json','apikey':'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtnY251ZWxxZ2F3c2xmY2Z6ZGNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQyNDg1NzgsImV4cCI6MjA4OTgyNDU3OH0.xlVn5RYNgfHf87tUYyMyMJWIGvLCD085y1g3EMEAf-Q','Authorization':'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtnY251ZWxxZ2F3c2xmY2Z6ZGNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQyNDg1NzgsImV4cCI6MjA4OTgyNDU3OH0.xlVn5RYNgfHf87tUYyMyMJWIGvLCD085y1g3EMEAf-Q'},
@@ -2155,6 +2173,8 @@ async function callClaude(text, mode, photoCount) {
   "keywords": ["คำสำคัญ1", "คำสำคัญ2", "คำสำคัญ3"],
   "risk_keywords": ["คำที่บ่งบอกความเสี่ยงสูง"],
   "confidence": 85,
+  "photo_match": true,
+  "photo_findings": "สิ่งที่เห็นในรูป 1 ประโยค",
   "equipment_type": "ลูกถ้วย|หม้อแปลง|สายไฟ|เสาไฟฟ้า|อุปกรณ์นิรภัย|เครื่องมือวัด|ป้ายเตือน|ไฟส่องสว่าง|บันได|ยานพาหนะ|อื่นๆ"
 }
 เกณฑ์ risk_level (ยึดตามนี้อย่างเคร่งครัด):
@@ -2173,8 +2193,14 @@ confidence: ความมั่นใจในการวิเคราะ�
   - input จากเสียง (transcribed): หักสูงสุด 10 คะแนน เพราะอาจฟังผิดหรือขาดคำ
   - ไม่มีรูปประกอบ + High Risk: หัก 5-10 คะแนน เพราะขาดหลักฐานยืนยัน
   - ข้อมูลชัดเจนครบถ้วน: ให้เต็ม
+photo_match: ถ้ามีรูปแนบมา ให้ตรวจว่ารูปสอดคล้องกับเหตุการณ์ในข้อความหรือไม่ (true/false)
+  - true = รูปแสดงสถานที่/อุปกรณ์/สภาพที่ตรงหรือเกี่ยวข้องกับที่บรรยาย
+  - false = รูปไม่เกี่ยวข้องเลย (เช่น รูปวิว รูปคน รูปอื่นที่ไม่ใช่หน้างาน) หรือขัดแย้งกับข้อความชัดเจน — กรณี false ให้หัก confidence อย่างน้อย 20 ด้วย
+  - ถ้าไม่มีรูปแนบมา ให้ส่ง true
+photo_findings: บรรยายสิ่งที่เห็นในรูป 1 ประโยคสั้นๆ โฟกัสจุดที่เกี่ยวกับความปลอดภัย (ถ้าไม่มีรูปให้ส่ง "")
+ใช้ข้อมูลจากรูปประกอบการตัดสิน risk_level และ equipment_type ด้วย — หลักฐานในรูปที่ยืนยันเงื่อนไข High ได้ชัดเจน นับเป็นข้อมูลสนับสนุนเทียบเท่าข้อความ
 equipment_type: เลือก "ชนิดอุปกรณ์/สิ่งที่เกี่ยวข้อง" จากลิสต์ที่กำหนดให้เท่านั้น ห้ามสร้างคำใหม่เอง — ใช้สำหรับจับรายงานที่พูดถึงอุปกรณ์ชนิดเดียวกันซ้ำ ถ้าไม่เข้าข่ายอะไรเลยหรือไม่ชัดเจน ให้ตอบ "อื่นๆ"`,
-      messages:[{role:'user', content:`Near Miss [${modeLabel}, ${photoContext}]: "${text}"`}]
+      messages:[{role:'user', content: userContent}]
     })
   });
   const data = await res.json();
@@ -2195,7 +2221,8 @@ function rShowResult(r) {
   badge.className = `risk-badge ${ri.cls}`; badge.textContent = ri.lbl;
   document.getElementById('r-category').textContent    = r.category;
   document.getElementById('r-credits-val').textContent  = `+${r.credits}`;
-  document.getElementById('r-summary').textContent      = r.summary_th;
+  document.getElementById('r-summary').textContent      = r.summary_th
+    + (r.photo_findings ? `\n📷 จากรูป: ${r.photo_findings}` : '');
   document.getElementById('r-action').textContent       = r.action;
 
   // Quality Badge
