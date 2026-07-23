@@ -1992,8 +1992,10 @@ function exportPDF() {
   tbody tr:nth-child(even) td { background: #f8faff; }
 
   /* HEINRICH */
-  .htri { display: flex; gap: 8px; }
-  .hbox { flex: 1; border-radius: 8px; padding: 10px 12px; display: flex; align-items: center; justify-content: space-between; }
+  .htri { display: flex; gap: 20px; align-items: center; }
+  .htri-svg { width: 150px; height: auto; flex-shrink: 0; }
+  .htri-legend { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+  .hbox { border-radius: 8px; padding: 10px 12px; display: flex; align-items: center; justify-content: space-between; }
   .hbox.maj { background: #fdf0f0; border: 1px solid #e8b4b4; }
   .hbox.min { background: #fef9ee; border: 1px solid #f5d6b4; }
   .hbox.nea { background: #f0fdf6; border: 1px solid #b4e8c8; }
@@ -2066,9 +2068,27 @@ function exportPDF() {
     </div>
   </div>
 
-  <!-- 3. รายการรายงานทั้งหมด -->
+  <!-- 3. Heinrich's Triangle -->
+  <div class="section keep-together">
+    <div class="section-title">3. Heinrich's Triangle (สะสมทั้งหมด)</div>
+    <div class="section-sub">อัตราส่วน 1 : 29 : 300 — ทุก 300 Near Miss ที่ถูกแก้ไข = ป้องกันอุบัติเหตุใหญ่ได้ 1 ครั้ง</div>
+    <div class="htri">
+      <svg class="htri-svg" viewBox="0 0 320 220" xmlns="http://www.w3.org/2000/svg">
+        <polygon points="160,6 120,75.3 200,75.3" fill="#fdf0f0" stroke="#e8b4b4" stroke-width="2"/>
+        <polygon points="120,75.3 200,75.3 240,144.7 80,144.7" fill="#fef9ee" stroke="#f5d6b4" stroke-width="2"/>
+        <polygon points="80,144.7 240,144.7 280,214 40,214" fill="#f0fdf6" stroke="#b4e8c8" stroke-width="2"/>
+      </svg>
+      <div class="htri-legend">
+        <div class="hbox maj"><div><div class="hbox-label c-red">MAJOR ACCIDENT</div><div style="font-size:9px;color:#888;margin-top:2px;">อุบัติเหตุใหญ่</div></div><div class="hbox-num c-red">${majH}</div></div>
+        <div class="hbox min"><div><div class="hbox-label c-amber">MINOR INCIDENT</div><div style="font-size:9px;color:#888;margin-top:2px;">เหตุการณ์เล็กน้อย</div></div><div class="hbox-num c-amber">~${minH}</div></div>
+        <div class="hbox nea"><div><div class="hbox-label c-green">NEAR MISS</div><div style="font-size:9px;color:#888;margin-top:2px;">รายงานทั้งหมด</div></div><div class="hbox-num c-green">${nea}</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. รายการรายงานทั้งหมด -->
   <div class="section">
-    <div class="section-title">3. รายการรายงานทั้งหมดประจำเดือน</div>
+    <div class="section-title">4. รายการรายงานทั้งหมดประจำเดือน</div>
     <div class="section-sub">รายงาน Near Miss ที่ได้รับในเดือน ${monthName} ${yearBE} จำนวน ${total} รายการ</div>
     <table>
       <thead><tr><th style="width:24px;">#</th><th>รหัส</th><th>วันที่</th><th>ผู้รายงาน</th><th>พื้นที่</th><th>ประเภท</th><th style="text-align:center;">ความเสี่ยง</th><th>สรุปเหตุการณ์</th><th style="text-align:center;">สถานะ</th></tr></thead>
@@ -2076,9 +2096,9 @@ function exportPDF() {
     </table>
   </div>
 
-  <!-- 4. การดำเนินการแก้ไข -->
+  <!-- 5. การดำเนินการแก้ไข -->
   <div class="section">
-    <div class="section-title">4. การดำเนินการแก้ไข</div>
+    <div class="section-title">5. การดำเนินการแก้ไข</div>
     <div style="font-size:10px;font-weight:700;color:#27ae60;margin-bottom:6px;">✅ รายงานที่ยืนยันแล้ว (${verified} รายการ)</div>
     <table>
       <thead><tr><th style="width:24px;">#</th><th>รหัส</th><th>ผู้รายงาน</th><th>สรุปเหตุการณ์</th><th>การดำเนินการที่แนะนำ</th><th style="text-align:center;">ยืนยันโดย</th></tr></thead>
@@ -2092,9 +2112,9 @@ function exportPDF() {
     </table>`:''}
   </div>
 
-  <!-- 5. Credits และการมีส่วนร่วม -->
+  <!-- 6. Credits และการมีส่วนร่วม -->
   <div class="section keep-together">
-    <div class="section-title">5. Credits และการมีส่วนร่วม</div>
+    <div class="section-title">6. Credits และการมีส่วนร่วม</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
       <div>
         <div style="font-size:10px;font-weight:700;color:#555;margin-bottom:6px;">🏅 Top 3 ผู้รายงานมากสุด (Credits สะสม)</div>
@@ -2111,17 +2131,6 @@ function exportPDF() {
           <div style="display:flex;justify-content:space-between;"><span>Credits ที่แจกจ่าย</span><strong>${monthReports.filter(r=>r.status==='verified'||r.status==='resolved').reduce((s,r)=>s+(r.credits||0),0)} credits</strong></div>
         </div>
       </div>
-    </div>
-  </div>
-
-  <!-- 6. Heinrich's Triangle -->
-  <div class="section keep-together">
-    <div class="section-title">6. Heinrich's Triangle (สะสมทั้งหมด)</div>
-    <div class="section-sub">อัตราส่วน 1 : 29 : 300 — ทุก 300 Near Miss ที่ถูกแก้ไข = ป้องกันอุบัติเหตุใหญ่ได้ 1 ครั้ง</div>
-    <div class="htri">
-      <div class="hbox maj"><div><div class="hbox-label c-red">MAJOR ACCIDENT</div><div style="font-size:9px;color:#888;margin-top:2px;">อุบัติเหตุใหญ่</div></div><div class="hbox-num c-red">${majH}</div></div>
-      <div class="hbox min"><div><div class="hbox-label c-amber">MINOR INCIDENT</div><div style="font-size:9px;color:#888;margin-top:2px;">เหตุการณ์เล็กน้อย</div></div><div class="hbox-num c-amber">~${minH}</div></div>
-      <div class="hbox nea"><div><div class="hbox-label c-green">NEAR MISS</div><div style="font-size:9px;color:#888;margin-top:2px;">รายงานทั้งหมด</div></div><div class="hbox-num c-green">${nea}</div></div>
     </div>
   </div>
 
