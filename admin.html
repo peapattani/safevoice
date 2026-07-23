@@ -1971,6 +1971,7 @@ function exportPDF() {
   /* SECTION */
   .section { margin-bottom: 5mm; }
   .keep-together { page-break-inside: avoid; }
+  .force-break { page-break-before: always; }
   .section-title { font-size: 14px; font-weight: 800; color: #0A1628; border-left: 4px solid #00A855; padding-left: 10px; margin-bottom: 4px; page-break-after: avoid; }
   .section-sub { font-size: 10px; color: #888; margin-bottom: 6px; padding-left: 14px; }
 
@@ -2009,6 +2010,7 @@ function exportPDF() {
   @media print {
     body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .keep-together { page-break-inside: avoid; }
+    .force-break { page-break-before: always; }
   }
 </style>
 </head>
@@ -2092,7 +2094,7 @@ function exportPDF() {
   </div>
 
   <!-- 4. รายการรายงานทั้งหมด -->
-  <div class="section">
+  <div class="section force-break">
     <div class="section-title">4. รายการรายงานทั้งหมดประจำเดือน</div>
     <div class="section-sub">รายงาน Near Miss ที่ได้รับในเดือน ${monthName} ${yearBE} จำนวน ${total} รายการ</div>
     <table>
