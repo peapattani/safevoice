@@ -2108,7 +2108,7 @@ function exportPDF() {
     <div class="section-title">5. การดำเนินการแก้ไข</div>
     <div style="font-size:10px;font-weight:700;color:#27ae60;margin-bottom:6px;">✅ รายงานที่ยืนยันแล้ว (${verified} รายการ)</div>
     <table>
-      <thead><tr><th style="width:24px;">#</th><th>ผู้รายงาน</th><th>สรุปเหตุการณ์</th><th>การดำเนินการที่แนะนำ</th><th style="text-align:center;">ยืนยันโดย</th></tr></thead>
+      <thead><tr><th style="width:22px;">#</th><th style="width:11%;">ผู้รายงาน</th><th style="width:26%;">สรุปเหตุการณ์</th><th style="width:48%;">การดำเนินการที่แนะนำ</th><th style="text-align:center;width:11%;">ยืนยันโดย</th></tr></thead>
       <tbody>${actionRows||'<tr><td colspan="5" style="text-align:center;color:#aaa;padding:16px;">ไม่มีรายงานที่ยืนยันแล้ว</td></tr>'}</tbody>
     </table>
     ${pending>0?`
