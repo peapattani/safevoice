@@ -2139,7 +2139,7 @@ async function anAiBatch() {
     const s = await anCall({ mode: 'synthesize' });
     AN.syn = { result: s.result, n_cases: s.n_cases, model: 'claude-opus-5-5' }; anRender();
     document.getElementById('an-aimsg').textContent = '✅ เสร็จแล้ว — ตรวจร่างในตารางและกดบันทึกเพื่ออนุมัติ';
-  } catch (e) { msg.innerHTML = `<span style="color:var(--red)">❌ ${acEsc(e.message)} (ชุดที่เสร็จแล้วถูกบันทึกไว้ กดใหม่เพื่อทำต่อ)</span>`; anRender(); }
+  } catch (e) { anRender(); const m2 = document.getElementById('an-aimsg'); if (m2) m2.innerHTML = `<span style="color:var(--red)">❌ ${acEsc(e.message)} (ชุดที่เสร็จแล้วถูกบันทึกไว้ กดใหม่เพื่อทำต่อ)</span>`; }
   btn.disabled = false;
 }
 
