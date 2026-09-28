@@ -242,6 +242,9 @@ body{font-family:'Sarabun',sans-serif;background:var(--navy);color:var(--white);
     <button class="tab-btn" id="t-credits"  onclick="go('credits')"> <span class="tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></span>Credits พนักงาน</button>
     <button class="tab-btn" id="t-warnings" onclick="go('warnings')"><span class="tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>เพิ่มใบเตือน</button>
 
+    <div class="sb-section">อุบัติเหตุ</div>
+    <button class="tab-btn" id="t-import" onclick="go('import')"><span class="tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></span>นำเข้าอุบัติเหตุ</button>
+
     <div class="sb-section">ระบบ</div>
     <button class="tab-btn" id="t-users" onclick="go('users')"><span class="tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>จัดการสิทธิ์</button>
     <button class="tab-btn" id="t-settings" onclick="go('settings')"><span class="tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>ตั้งค่าระบบ</button>
@@ -459,6 +462,16 @@ body{font-family:'Sarabun',sans-serif;background:var(--navy);color:var(--white);
     </div>
 
     <!-- USERS -->
+    <div class="tab-panel" id="p-import">
+      <div class="panel-title">นำเข้าสถิติอุบัติเหตุ</div>
+      <div class="panel-sub">อัปโหลดไฟล์ Excel ที่ export จากระบบ กฟภ.ส่วนกลาง — ระบบแยกฟิลด์ให้อัตโนมัติ ตรวจ Preview ก่อนบันทึก</div>
+      <div class="card">
+        <div class="section-label">📥 เลือกไฟล์ .xlsx</div>
+        <input type="file" id="ac-file" accept=".xlsx,.xls" class="fi" onchange="acReadFile(this.files[0])">
+      </div>
+      <div id="ac-preview"></div>
+    </div>
+
     <div class="tab-panel" id="p-users">
       <div class="panel-title">จัดการสิทธิ์และบัญชี</div>
       <div class="panel-sub">เพิ่มพนักงาน · ปรับ role · รีเซ็ตรหัสผ่าน</div>
@@ -535,6 +548,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--navy);color:var(--white);
     <div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:2px;margin-bottom:12px;">เมนูเพิ่มเติม</div>
     <button class="more-item" onclick="go('credits');toggleMoreMenu()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" style="vertical-align:middle;margin-right:8px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>Credits พนักงาน</button>
     <button class="more-item" onclick="go('warnings');toggleMoreMenu()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;vertical-align:middle;margin-right:8px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>เพิ่มใบเตือน</button>
+    <button class="more-item" onclick="go('import');toggleMoreMenu()">📥 นำเข้าอุบัติเหตุ</button>
     <button class="more-item" onclick="go('users');toggleMoreMenu()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" style="vertical-align:middle;margin-right:8px"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>จัดการสิทธิ์</button>
     <button class="more-item" onclick="go('settings');toggleMoreMenu()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" style="vertical-align:middle;margin-right:8px"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>ตั้งค่าระบบ</button>
   </div>
@@ -557,6 +571,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--navy);color:var(--white);
   </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
 // ══ DATA ══
 // ══════════════════════════════════════════════════════════════════
@@ -1866,6 +1881,133 @@ async function stTestClaude() {
   }
   btn.disabled = false;
   btn.textContent = '🧪 ทดสอบการเชื่อมต่อ';
+}
+
+// ══ ACCIDENT IMPORT (นำเข้าไฟล์ Excel อุบัติเหตุจาก กฟภ.ส่วนกลาง) ══
+const AC = { rows: [] };
+const AC_FLAG = {
+  no_cause: 'ไม่มีสาเหตุในไฟล์', year_mismatch: 'ปีในเนื้อความไม่ตรงวันที่', zone_unknown: 'ไม่พบเขต',
+  free_text_job: 'ประเภทงานเป็นข้อความอิสระ', no_severity: 'ไม่มีระดับความรุนแรง'
+};
+const acClean = s => String(s == null ? '' : s).replace(/[\u00a0\s]+/g, ' ').trim();
+const acEsc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+// แปลง 1 แถวของไฟล์ส่วนกลาง (ช่องรวมข้อความหลายค่า) → ฟิลด์แยก
+function acParse(o) {
+  const flags = [];
+  const loc = acClean(o.loc), lm = loc.match(/สถานที่:\s*(.*?)\s*สังกัด:\s*(.*)$/);
+  const location = lm ? lm[1] : loc, aff = lm ? lm[2] : '';
+  const zm = aff.match(/(กฟ[กนตฉ]\.\d|สำนักงานใหญ่)\s*$/);
+  const zone = zm ? zm[1] : null; if (!zone) flags.push('zone_unknown');
+
+  const dt = acClean(o.dt), dm = dt.match(/(\d{4})-(\d{2})-(\d{2})/), tm = dt.match(/เวลา\s*(\d{1,2})[.:](\d{2})/);
+  const date = dm ? `${dm[1]}-${dm[2]}-${dm[3]}` : null;
+  const time = tm ? `${tm[1].padStart(2, '0')}:${tm[2]}` : null;
+
+  const t = acClean(o.kind);
+  const jm = t.match(/ประเภทงาน (.*?) ?,? ?ผู้ประสบอุบัติเหตุ/);
+  let jobParts = jm ? jm[1].split(',').map(x => x.trim()).filter(Boolean) : [];
+  const job = jobParts[0] || null;
+  let extra = '';
+  if (jobParts.length > 1) { flags.push('free_text_job'); extra = jobParts.slice(1).join(', '); }
+  const vm = t.match(/ผู้ประสบอุบัติเหตุ ([^,]*?) ?,/);
+  const n = k => { const x = t.match(new RegExp(k + ' (\\d+) คน')); return x ? +x[1] : 0; };
+  const deaths = n('เสียชีวิต'), injured = n('บาดเจ็บ'), limb = n('สูญเสียอวัยวะ');
+  const severity = deaths > 0 ? 'เสียชีวิต' : limb > 0 ? 'สูญเสียอวัยวะ' : injured > 0 ? 'บาดเจ็บ' : null;
+  if (!severity) flags.push('no_severity');
+
+  const fm = acClean(o.feat).match(/ลักษณะ (.*?) สิ่งที่ทำ/);
+  const causes = acClean(o.cause).split(',').map(x => x.trim()).filter(x => x && x !== '-');
+  if (!causes.length) flags.push('no_cause');
+
+  let desc = acClean(o.desc);
+  const ys = [...desc.matchAll(/(?<!\d)(25[6-9]\d)(?!\d)/g)].map(x => +x[1]);
+  if (dm && ys.some(y => y !== +dm[1] + 543)) flags.push('year_mismatch');
+  if (extra) desc = `[หมายเหตุประเภทงาน: ${extra}] ` + desc;
+
+  return {
+    di_no: parseInt(o.di, 10) || null, di_counted: acClean(o.cnt).toUpperCase() === 'Y',
+    location, affiliation: aff, zone, occurred_date: date, occurred_time: time,
+    job_type: job, victim_type: vm ? vm[1].trim() : null, severity,
+    deaths, injured, limb_loss: limb, lost_days: parseInt(o.lost, 10) || 0,
+    accident_type: fm ? fm[1].trim() : null, description: desc, causes, flags
+  };
+}
+
+// อ่านชีต → หาแถวหัวคอลัมน์จากชื่อ (ไม่ผูกกับลำดับคอลัมน์)
+function acParseSheet(aoa) {
+  const hi = aoa.findIndex(r => r.some(c => acClean(c).includes('หมายเลข DI')));
+  if (hi < 0) throw new Error('ไม่พบหัวคอลัมน์ "หมายเลข DI" — ไฟล์อาจไม่ใช่รูปแบบรายงานอุบัติเหตุ');
+  const H = aoa[hi].map(acClean);
+  const want = { di:'หมายเลข DI', cnt:'คิดค่า DI', loc:'สถานที่', dt:'วันที่', kind:'ประเภทประสบภัย',
+                 lost:'วันสูญเสีย', feat:'ลักษณะ', desc:'รายละเอียด', cause:'สรุปสาเหตุ' };
+  const idx = {}, missing = [];
+  for (const k in want) { idx[k] = H.findIndex(h => h.includes(want[k])); if (idx[k] < 0) missing.push(want[k]); }
+  if (missing.length) throw new Error('ไม่พบคอลัมน์: ' + missing.join(', '));
+  return aoa.slice(hi + 1).filter(r => acClean(r[idx.di]))
+    .map(r => { const o = {}; for (const k in idx) o[k] = r[idx[k]]; return acParse(o); });
+}
+
+function acReadFile(file) {
+  if (!file) return;
+  const rd = new FileReader();
+  rd.onload = e => {
+    try {
+      const wb = XLSX.read(e.target.result, { type: 'array' });
+      const aoa = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, raw: false, defval: '' });
+      AC.rows = acParseSheet(aoa);
+      acRenderPreview();
+    } catch (err) { AC.rows = []; document.getElementById('ac-preview').innerHTML = `<div class="card" style="border-color:var(--red);color:var(--red);">❌ ${acEsc(err.message)}</div>`; }
+  };
+  rd.readAsArrayBuffer(file);
+}
+
+function acRenderPreview() {
+  const R = AC.rows, sum = k => R.reduce((a, r) => a + r[k], 0);
+  const dup = R.length - new Set(R.map(r => r.di_no)).size;
+  const flagged = R.filter(r => r.flags.length).length;
+  const card = (n, l, c) => `<div class="stat-card"><div class="stat-num" style="color:${c}">${n}</div><div class="stat-lbl">${l}</div></div>`;
+  const rows = R.map(r => `<tr>
+    <td>${r.di_no}</td><td>${r.occurred_date || '—'}</td><td>${acEsc(r.zone || '—')}</td>
+    <td>${acEsc(r.job_type || '—')}</td><td>${acEsc(r.accident_type || '—')}</td>
+    <td>${acEsc(r.severity || '—')}</td><td>${r.deaths}/${r.injured}/${r.limb_loss}</td>
+    <td style="font-size:11px;color:var(--amber);">${r.flags.map(f => AC_FLAG[f]).join(', ')}</td></tr>`).join('');
+  document.getElementById('ac-preview').innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:14px;">
+      ${card(R.length, 'เหตุการณ์', 'var(--green)')}${card(sum('deaths'), 'เสียชีวิต (คน)', 'var(--red)')}
+      ${card(sum('injured'), 'บาดเจ็บ (คน)', 'var(--amber)')}${card(flagged, 'แถวที่ต้องตรวจ', 'var(--amber)')}
+    </div>
+    ${dup ? `<div class="card" style="border-color:var(--red);color:var(--red);">⚠ พบเลข DI ซ้ำในไฟล์ ${dup} แถว — แถวหลังจะทับแถวก่อน</div>` : ''}
+    <div class="card"><div class="section-label">PREVIEW — ตรวจก่อนบันทึก</div>
+      <div style="overflow:auto;max-height:420px;"><table class="tbl">
+        <thead><tr><th>DI</th><th>วันที่</th><th>เขต</th><th>ประเภทงาน</th><th>ลักษณะเหตุ</th><th>ความรุนแรง</th><th>ตาย/เจ็บ/เสียอวัยวะ</th><th>ข้อสังเกต</th></tr></thead>
+        <tbody>${rows}</tbody></table></div></div>
+    <div class="card"><div class="section-label">ยืนยันสิทธิ์และบันทึก</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">เลข DI ที่มีอยู่แล้วจะถูกอัปเดต ที่ยังไม่มีจะถูกเพิ่ม</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+        <div class="fg" style="margin:0;"><label class="fl">รหัสพนักงาน</label><input class="fi" id="ac-code" value="${acEsc(acSess().emp_code || '')}"></div>
+        <div class="fg" style="margin:0;"><label class="fl">รหัสผ่าน</label><input class="fi" id="ac-pw" type="password" autocomplete="off"></div>
+        <button class="btn-prim" id="ac-save" onclick="acSave()">💾 บันทึก ${R.length} เหตุการณ์</button>
+      </div><div id="ac-result" style="margin-top:12px;font-size:13px;"></div></div>`;
+}
+
+function acSess() { try { return JSON.parse(sessionStorage.getItem('sv_session') || '{}'); } catch (e) { return {}; } }
+
+async function acSave() {
+  const code = document.getElementById('ac-code').value.trim(), pw = document.getElementById('ac-pw').value;
+  const out = document.getElementById('ac-result'), btn = document.getElementById('ac-save');
+  if (!code || !pw) { out.innerHTML = '<span style="color:var(--amber)">กรอกรหัสพนักงานและรหัสผ่านก่อน</span>'; return; }
+  btn.disabled = true; btn.textContent = '⏳ กำลังบันทึก...';
+  try {
+    const res = await fetch(`${SB_URL}/rest/v1/rpc/accident_import`, {
+      method: 'POST', headers: sbHeaders, body: JSON.stringify({ p_emp_code: code, p_password: pw, p_rows: AC.rows })
+    });
+    const j = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(j.message === 'unauthorized' ? 'รหัสหรือรหัสผ่านไม่ถูกต้อง หรือไม่มีสิทธิ์ (ต้องเป็น จป./ผู้จัดการ)' : (j.message || res.status));
+    out.innerHTML = `<span style="color:var(--green)">✅ เพิ่มใหม่ ${j.inserted} · อัปเดต ${j.updated} เหตุการณ์</span>`;
+    showToast('✅ นำเข้าข้อมูลอุบัติเหตุสำเร็จ');
+  } catch (e) { out.innerHTML = `<span style="color:var(--red)">❌ ${acEsc(e.message)}</span>`; }
+  btn.disabled = false; btn.textContent = `💾 บันทึก ${AC.rows.length} เหตุการณ์`;
 }
 
 // ══ LOGOUT ══
