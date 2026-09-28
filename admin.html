@@ -244,6 +244,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--navy);color:var(--white);
 
     <div class="sb-section">อุบัติเหตุ</div>
     <button class="tab-btn" id="t-import" onclick="go('import')"><span class="tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></span>นำเข้าอุบัติเหตุ</button>
+    <button class="tab-btn" id="t-analyze" onclick="go('analyze')"><span class="tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span>วิเคราะห์อุบัติเหตุ</button>
 
     <div class="sb-section">ระบบ</div>
     <button class="tab-btn" id="t-users" onclick="go('users')"><span class="tab-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>จัดการสิทธิ์</button>
@@ -472,6 +473,16 @@ body{font-family:'Sarabun',sans-serif;background:var(--navy);color:var(--white);
       <div id="ac-preview"></div>
     </div>
 
+    <div class="tab-panel" id="p-analyze">
+      <div class="panel-title">วิเคราะห์อุบัติเหตุ</div>
+      <div class="panel-sub">ยืนยันสิทธิ์เพื่อโหลดข้อมูล — จำแนกสาเหตุ ดูโซน/ความเสี่ยง และกำหนดมาตรการป้องกัน</div>
+      <div class="card"><div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+        <div class="fg" style="margin:0;"><label class="fl">รหัสพนักงาน</label><input class="fi" id="an-code"></div>
+        <div class="fg" style="margin:0;"><label class="fl">รหัสผ่าน</label><input class="fi" id="an-pw" type="password" autocomplete="off"></div>
+        <button class="btn-prim" onclick="anLoad()">โหลดข้อมูล</button></div><div id="an-msg" style="margin-top:10px;font-size:13px;"></div></div>
+      <div id="an-body"></div>
+    </div>
+
     <div class="tab-panel" id="p-users">
       <div class="panel-title">จัดการสิทธิ์และบัญชี</div>
       <div class="panel-sub">เพิ่มพนักงาน · ปรับ role · รีเซ็ตรหัสผ่าน</div>
@@ -549,6 +560,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--navy);color:var(--white);
     <button class="more-item" onclick="go('credits');toggleMoreMenu()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" style="vertical-align:middle;margin-right:8px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>Credits พนักงาน</button>
     <button class="more-item" onclick="go('warnings');toggleMoreMenu()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;vertical-align:middle;margin-right:8px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>เพิ่มใบเตือน</button>
     <button class="more-item" onclick="go('import');toggleMoreMenu()">📥 นำเข้าอุบัติเหตุ</button>
+    <button class="more-item" onclick="go('analyze');toggleMoreMenu()">📊 วิเคราะห์อุบัติเหตุ</button>
     <button class="more-item" onclick="go('users');toggleMoreMenu()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" style="vertical-align:middle;margin-right:8px"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>จัดการสิทธิ์</button>
     <button class="more-item" onclick="go('settings');toggleMoreMenu()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" style="vertical-align:middle;margin-right:8px"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>ตั้งค่าระบบ</button>
   </div>
@@ -2008,6 +2020,87 @@ async function acSave() {
     showToast('✅ นำเข้าข้อมูลอุบัติเหตุสำเร็จ');
   } catch (e) { out.innerHTML = `<span style="color:var(--red)">❌ ${acEsc(e.message)}</span>`; }
   btn.disabled = false; btn.textContent = `💾 บันทึก ${AC.rows.length} เหตุการณ์`;
+}
+
+// ══ ACCIDENT ANALYSIS (วิเคราะห์อุบัติเหตุ) ══
+const AN = { code: '', pw: '', rows: [], sel: null };
+const AN_CAUSES = ['ไม่สวมอุปกรณ์ป้องกันอันตรายส่วนบุคคล','ใช้อุปกรณ์ป้องกันอันตรายส่วนบุคคลไม่ถูกต้องหรือไม่เหมาะสม',
+  'ใช้เครื่องมือ อุปกรณ์การปฏิบัติงานไม่ถูกวิธีหรือไม่เหมาะสม','อุปกรณ์ เครื่องจักร เครื่องมือในการปฏิบัติงานไม่มี/ชำรุด',
+  'ขั้นตอนปฏิบัติงานไม่ถูกต้อง/ข้ามขั้นตอน','ปฏิบัติงานโดยไม่ได้รับอนุญาตจากผู้อนุญาต','ผู้ปฏิบัติงานขาดความรู้/ประสบการณ์ในงานที่ปฏิบัติ',
+  'ผู้ปฏิบัติงานประมาท/ขาดความระมัดระวัง','ขาดการประสานงานที่ดี','ขาดการออกแบบสถานที่/การปฏิบัติงานที่ดี',
+  'สถานที่ทำงานคับแคบหรือจำกัดมีสิ่งกีดขวาง','สภาพแวดล้อมไม่ปลอดภัย เช่น แสง เสียง ความร้อนหรืออื่นๆ','การจัดวางท่าทางการปฏิบัติงานไม่ปลอดภัย',
+  'ระบบไฟฟ้าหรืออุปกรณ์ไฟฟ้าชำรุด หรือบกพร่อง','วัสดุอุปกรณ์วางไม่เป็นระเบียบ','บุคคลอื่นมากระทำ','ไม่มี/ไม่ใส่ใจในคำแนะนำหรือการตักเตือน',
+  'ปฏิบัติงานโดยที่จิตใจไม่พร้อมหรือผิดปกติ','ปฏิบัติงานโดยไม่ใช่หน้าที่','อื่นๆ'];
+const AN_LEVELS = ['ขจัด (Elimination)','ทดแทน (Substitution)','วิศวกรรม (Engineering)','บริหารจัดการ (Administrative)','PPE'];
+const anCauses = r => (r.a_causes && r.a_causes.length) ? r.a_causes : (r.causes || []);
+
+function anTally(rows, f) { const m = {}; rows.forEach(r => [].concat(f(r)).forEach(k => { if (k) m[k] = (m[k] || 0) + 1; })); return Object.entries(m).sort((a, b) => b[1] - a[1]); }
+function anBars(list, max, col) { return list.map(([k, n]) => `<div style="display:flex;align-items:center;gap:8px;margin:5px 0;font-size:12px;"><span style="width:150px;flex-shrink:0;">${acEsc(k)}</span><div style="flex:1;background:var(--navy);border-radius:5px;height:14px;"><div style="width:${n / max * 100}%;background:${col};height:100%;border-radius:5px;"></div></div><b style="width:26px;text-align:right;">${n}</b></div>`).join(''); }
+
+async function anLoad() {
+  AN.code = document.getElementById('an-code').value.trim(); AN.pw = document.getElementById('an-pw').value;
+  const out = document.getElementById('an-msg'); out.textContent = '⏳ กำลังโหลด...';
+  try {
+    const res = await fetch(`${SB_URL}/rest/v1/rpc/accident_list`, { method: 'POST', headers: sbHeaders, body: JSON.stringify({ p_emp_code: AN.code, p_password: AN.pw }) });
+    const j = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(j.message === 'unauthorized' ? 'รหัสหรือรหัสผ่านไม่ถูกต้อง หรือไม่มีสิทธิ์' : (j.message || res.status));
+    AN.rows = j; out.textContent = ''; anRender();
+  } catch (e) { out.innerHTML = `<span style="color:var(--red)">❌ ${acEsc(e.message)}</span>`; }
+}
+
+function anRender() {
+  const R = AN.rows, N = R.length; if (!N) { document.getElementById('an-body').innerHTML = '<div class="card">ยังไม่มีข้อมูล — นำเข้าไฟล์ก่อน</div>'; return; }
+  const sum = k => R.reduce((a, r) => a + r[k], 0), todo = R.filter(r => !anCauses(r).length).length;
+  const zone = anTally(R, r => r.zone), types = anTally(R, r => r.accident_type), jobs = anTally(R, r => r.job_type).slice(0, 6);
+  const cause = anTally(R, anCauses).slice(0, 8), sev = anTally(R, r => r.severity || 'ไม่ระบุ');
+  const card = (n, l, c) => `<div class="stat-card"><div class="stat-num" style="color:${c}">${n}</div><div class="stat-lbl">${l}</div></div>`;
+  // Risk: โอกาส (สัดส่วนเหตุ) + ความรุนแรงสูงสุด → ระดับ
+  const risk = types.map(([t, n]) => {
+    const rs = R.filter(r => r.accident_type === t), d = rs.reduce((a, r) => a + r.deaths, 0), l = rs.reduce((a, r) => a + r.limb_loss, 0);
+    const L = n / N >= .2 ? 3 : n / N >= .08 ? 2 : 1, S = d ? 3 : l ? 2 : 1, sc = L + S;
+    const lv = sc >= 5 ? ['สูงมาก', 'var(--red)'] : sc === 4 ? ['สูง', 'var(--amber)'] : ['ปานกลาง/ต่ำ', 'var(--green)'];
+    return `<tr><td>${acEsc(t)}</td><td>${n}</td><td>${d}</td><td>${['', 'ต่ำ', 'กลาง', 'สูง'][L]}</td><td style="color:${lv[1]};font-weight:700;">${lv[0]}</td></tr>`;
+  }).join('');
+  const tt = types.slice(0, 5).map(x => x[0]);
+  const mx = jobs.map(([j]) => `<tr><td>${acEsc(j)}</td>${tt.map(t => { const n = R.filter(r => r.job_type === j && r.accident_type === t).length; return `<td style="text-align:center;${n ? 'color:var(--green);font-weight:700;' : 'color:var(--muted);'}">${n || '·'}</td>`; }).join('')}</tr>`).join('');
+  const ev = R.map(r => { const c = anCauses(r).length; return `<tr><td>${r.di_no}</td><td>${r.occurred_date || '—'}</td><td>${acEsc(r.zone || '—')}</td><td>${acEsc(r.accident_type || '—')}</td><td>${acEsc(r.severity || '—')}</td><td style="color:${c ? 'var(--green)' : 'var(--amber)'}">${c ? '✔ ' + c : 'ยังไม่มี'}${r.a_level ? ' · ' + acEsc(r.a_level.split(' ')[0]) : ''}</td><td><button class="btn-sm" onclick="anEdit(${r.di_no})">วิเคราะห์</button></td></tr>`; }).join('');
+  document.getElementById('an-body').innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:14px;">
+      ${card(N, 'เหตุการณ์', 'var(--green)')}${card(sum('deaths'), 'เสียชีวิต (คน)', 'var(--red)')}${card(sum('injured'), 'บาดเจ็บ (คน)', 'var(--amber)')}${card(todo, 'ยังไม่มีสาเหตุ', 'var(--amber)')}</div>
+    <div class="card"><div class="section-label">แยกตามโซน</div>${anBars(zone, zone[0][1], 'var(--green)')}</div>
+    <div class="card"><div class="section-label">ระดับความรุนแรง (สูงสุดของเหตุการณ์)</div>${anBars(sev, sev[0][1], 'var(--red)')}</div>
+    <div class="card"><div class="section-label">สาเหตุที่พบบ่อย (รวมที่ Admin จัดเพิ่ม)</div>${cause.length ? anBars(cause, cause[0][1], 'var(--amber)') : '<span style="color:var(--muted)">ยังไม่มีข้อมูลสาเหตุ</span>'}</div>
+    <div class="card"><div class="section-label">โอกาสเกิด × ความรุนแรง ตามลักษณะเหตุ</div>
+      <div style="overflow:auto;"><table class="tbl"><thead><tr><th>ลักษณะเหตุ</th><th>เหตุ</th><th>ตาย</th><th>โอกาส</th><th>ระดับความเสี่ยง</th></tr></thead><tbody>${risk}</tbody></table></div>
+      <div style="font-size:11px;color:var(--muted);margin-top:8px;">ข้อมูล ${N} เหตุ ใช้เป็นระดับประกอบดุลยพินิจ ไม่ใช่ความน่าจะเป็น</div></div>
+    <div class="card"><div class="section-label">ความเชื่อมโยง ประเภทงาน × ลักษณะเหตุ</div>
+      <div style="overflow:auto;"><table class="tbl"><thead><tr><th>ประเภทงาน</th>${tt.map(t => `<th>${acEsc(t)}</th>`).join('')}</tr></thead><tbody>${mx}</tbody></table></div></div>
+    <div id="an-edit"></div>
+    <div class="card"><div class="section-label">รายการเหตุการณ์ — กด "วิเคราะห์" เพื่อจัดสาเหตุและกำหนดมาตรการ</div>
+      <div style="overflow:auto;max-height:460px;"><table class="tbl"><thead><tr><th>DI</th><th>วันที่</th><th>โซน</th><th>ลักษณะ</th><th>รุนแรง</th><th>สาเหตุ/มาตรการ</th><th></th></tr></thead><tbody>${ev}</tbody></table></div></div>`;
+}
+
+function anEdit(di) {
+  const r = AN.rows.find(x => x.di_no === di), cur = anCauses(r), box = document.getElementById('an-edit');
+  box.innerHTML = `<div class="card" style="border-color:var(--green);"><div class="section-label">วิเคราะห์ DI ${di} — ${acEsc(r.accident_type || '')} · ${acEsc(r.job_type || '')} · ${acEsc(r.zone || '')}</div>
+    <div style="font-size:13px;line-height:1.6;margin-bottom:12px;color:var(--ice);">${acEsc(r.description || '')}</div>
+    <label class="fl">สาเหตุ (เลือกได้หลายข้อ)</label>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:4px 12px;margin:6px 0 12px;font-size:12px;">${AN_CAUSES.map((c, i) => `<label style="display:flex;gap:6px;cursor:pointer;"><input type="checkbox" class="an-c" value="${i}" ${cur.includes(c) ? 'checked' : ''}>${acEsc(c)}</label>`).join('')}</div>
+    <div class="fg"><label class="fl">ระดับมาตรการ (ลำดับชั้นการควบคุม)</label><select class="fi" id="an-lv"><option value="">— เลือก —</option>${AN_LEVELS.map(l => `<option ${r.a_level === l ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
+    <div class="fg"><label class="fl">มาตรการป้องกัน</label><textarea class="fi" id="an-ms" rows="3">${acEsc(r.a_measures || '')}</textarea></div>
+    <button class="btn-prim" onclick="anSave(${di})">💾 บันทึกผลวิเคราะห์</button> <span id="an-sv" style="font-size:12px;"></span></div>`;
+  box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+async function anSave(di) {
+  const causes = [...document.querySelectorAll('.an-c:checked')].map(x => AN_CAUSES[+x.value]), lv = document.getElementById('an-lv').value, ms = document.getElementById('an-ms').value.trim();
+  const sv = document.getElementById('an-sv'); sv.textContent = '⏳';
+  try {
+    const res = await fetch(`${SB_URL}/rest/v1/rpc/accident_save_analysis`, { method: 'POST', headers: sbHeaders, body: JSON.stringify({ p_emp_code: AN.code, p_password: AN.pw, p_di: di, p_causes: causes, p_level: lv || null, p_measures: ms || null }) });
+    if (!res.ok) { const j = await res.json().catch(() => ({})); throw new Error(j.message || res.status); }
+    const r = AN.rows.find(x => x.di_no === di); r.a_causes = causes; r.a_level = lv || null; r.a_measures = ms || null;
+    showToast('✅ บันทึกแล้ว'); anRender(); document.getElementById('an-edit').innerHTML = '';
+  } catch (e) { sv.innerHTML = `<span style="color:var(--red)">❌ ${acEsc(e.message)}</span>`; }
 }
 
 // ══ LOGOUT ══
