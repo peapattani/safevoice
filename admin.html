@@ -2129,7 +2129,7 @@ async function anAiBatch() {
   if (!todo.length && !confirm('ทุกเคสมีผลแล้ว — สังเคราะห์ภาพรวมใหม่อย่างเดียวหรือไม่?')) return;
   btn.disabled = true;
   try {
-    const SZ = 15;
+    const SZ = 6;
     for (let i = 0; i < todo.length; i += SZ) {
       msg.textContent = `⏳ จำแนกรายเคส ${Math.min(i + SZ, todo.length)}/${todo.length}...`;
       const j = await anCall({ mode: 'classify', di_nos: todo.slice(i, i + SZ) });
