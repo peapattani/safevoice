@@ -578,16 +578,15 @@ body {
 .ld-sub { font-size:12px; font-weight:700; color:var(--muted); margin:18px 0 10px; }
 .ld-cause { margin-bottom:12px; }
 .ld-cause:last-child { margin-bottom:0; }
-.ld-cause-row { display:flex; justify-content:space-between; align-items:baseline; gap:10px; font-size:14px; margin-bottom:5px; }
+.ld-cause-row { display:flex; justify-content:space-between; align-items:baseline; gap:10px; font-size:13px; margin-bottom:5px; }
 .ld-cause-name { flex:1; line-height:1.4; }
 .ld-cause-cnt { font-weight:800; white-space:nowrap; }
-.ld-cause-cnt small { font-weight:400; color:var(--muted); font-size:12px; }
+.ld-cause-cnt small { font-weight:400; color:var(--muted); font-size:11px; }
 .ld-bar { height:8px; border-radius:4px; background:var(--navy); overflow:hidden; }
 .ld-bar > i { display:block; height:100%; border-radius:4px; background:var(--red); opacity:.55; }
 .ld-cause.first .ld-bar > i { opacity:1; }
 .learn-h { font-size: 16px; font-weight: 700; margin: 22px 2px 12px; }
 .ld-cause.job .ld-bar > i { background: var(--amber); opacity: .6; }
-.ld-cause.job .ld-cause-name { font-weight: 600; }
 </style>
 </head>
 <body>
@@ -2619,8 +2618,6 @@ function renderLearn(d) {
   const maxC = Math.max(1, ...causes.map(c => Number(c.count) || 0));
   const jobs = (st.top_jobs || (st.top_job ? [st.top_job] : [])).filter(j => j && j.name);
   const maxJ = Math.max(1, ...jobs.map(j => Number(j.count) || 0));
-  // อันดับแบบเท่ากันได้ เช่น 14, 14, 10 → 1, 1, 3
-  const jobRank = j => 1 + jobs.filter(x => (Number(x.count) || 0) > (Number(j.count) || 0)).length;
   const dash = `
     <div class="card fade-up">
       <div class="section-label">ภาพรวมปีนี้</div>
@@ -2640,7 +2637,7 @@ function renderLearn(d) {
         ${causes.map((c, i) => `
           <div class="ld-cause${i === 0 ? ' first' : ''}">
             <div class="ld-cause-row">
-              <span class="ld-cause-name">${i + 1}. ${learnEsc(c.name)}</span>
+              <span class="ld-cause-name">${learnEsc(c.name)}</span>
               <span class="ld-cause-cnt">${num(c.count)} <small>ครั้ง</small></span>
             </div>
             <div class="ld-bar"><i style="width:${Math.round((Number(c.count) || 0) / maxC * 100)}%"></i></div>
@@ -2650,7 +2647,7 @@ function renderLearn(d) {
         ${jobs.map(j => `
           <div class="ld-cause job">
             <div class="ld-cause-row">
-              <span class="ld-cause-name">${jobRank(j)}. ${learnEsc(j.name)}</span>
+              <span class="ld-cause-name">${learnEsc(j.name)}</span>
               <span class="ld-cause-cnt">${num(j.count)} <small>เคส</small></span>
             </div>
             <div class="ld-bar"><i style="width:${Math.round((Number(j.count) || 0) / maxJ * 100)}%"></i></div>
