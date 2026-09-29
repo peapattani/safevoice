@@ -475,7 +475,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--navy);color:var(--white);
 
     <div class="tab-panel" id="p-analyze">
       <div class="panel-title">วิเคราะห์อุบัติเหตุ</div>
-      <div class="panel-sub">ยืนยันสิทธิ์เพื่อโหลดข้อมูล — ดูสถิติ โซน/ความเสี่ยง และอ่านรายละเอียดแต่ละเหตุการณ์ (สาเหตุรายเคสและมาตรการป้องกันกำหนดโดยเจ้าหน้าที่เองทั้งหมด)</div>
+      <div class="panel-sub">ยืนยันสิทธิ์เพื่อโหลดข้อมูล — ดูสถิติ โซน/ความเสี่ยง และอ่านรายละเอียดแต่ละเหตุการณ์ </div>
       <div class="card"><div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
         <div class="fg" style="margin:0;"><label class="fl">รหัสพนักงาน</label><input class="fi" id="an-code"></div>
         <div class="fg" style="margin:0;"><label class="fl">รหัสผ่าน</label><input class="fi" id="an-pw" type="password" autocomplete="off"></div>
@@ -2067,7 +2067,7 @@ function anRender() {
     <div class="card"><div class="section-label">ความเชื่อมโยง ประเภทงาน × ลักษณะเหตุ</div>
       <div style="overflow:auto;"><table class="tbl"><thead><tr><th>ประเภทงาน</th>${tt.map(t => `<th>${acEsc(t)}</th>`).join('')}</tr></thead><tbody>${mx}</tbody></table></div></div>
     ${anSynHtml()}
-    <div class="card"><div class="section-label">🤖 AI ผู้เชี่ยวชาญ</div><div style="font-size:12px;color:var(--muted);margin-bottom:10px;">ให้ AI (Opus 5.5) อ่านทุกเคสพร้อมกัน สรุปรูปแบบซ้ำ จุดเสี่ยงสำคัญ และบทเรียนสำหรับพนักงาน — สาเหตุรายเคสและมาตรการป้องกันยังคงกำหนดโดยเจ้าหน้าที่ทั้งหมด ไม่ใช่ AI</div><button class="btn-prim" id="an-ai" onclick="anAiBatch()">🤖 สรุปภาพรวมด้วย AI</button> <span id="an-aimsg" style="font-size:12px;margin-left:8px;"></span></div>
+    <div class="card"><div class="section-label">🤖 AI ผู้เชี่ยวชาญด้านความปลอดภัย</div><div style="font-size:12px;color:var(--muted);margin-bottom:10px;">ให้ AI อ่านทุกเคสพร้อมกัน สรุปรูปแบบซ้ำ จุดเสี่ยงสำคัญ และบทเรียนสำหรับพนักงาน</div><button class="btn-prim" id="an-ai" onclick="anAiBatch()">🤖 สรุปภาพรวมด้วย AI</button> <span id="an-aimsg" style="font-size:12px;margin-left:8px;"></span></div>
     <div id="an-edit"></div>
     <div class="card"><div class="section-label">รายการเหตุการณ์ — กด "รายละเอียด" เพื่ออ่านเหตุการณ์</div>
       <div style="overflow:auto;max-height:460px;"><table class="tbl"><thead><tr><th>DI</th><th>วันที่</th><th>โซน</th><th>ลักษณะ</th><th>รุนแรง</th><th>สาเหตุ</th><th></th></tr></thead><tbody>${ev}</tbody></table></div></div>`;
