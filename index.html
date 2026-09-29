@@ -585,11 +585,9 @@ body {
 .ld-bar { height:8px; border-radius:4px; background:var(--navy); overflow:hidden; }
 .ld-bar > i { display:block; height:100%; border-radius:4px; background:var(--red); opacity:.55; }
 .ld-cause.first .ld-bar > i { opacity:1; }
-.ld-job { display:flex; justify-content:space-between; align-items:baseline; gap:10px;
-  background:var(--navy); border:1px solid var(--border); border-radius:12px; padding:12px 14px; }
-.ld-job-name { font-size:15px; font-weight:700; line-height:1.4; }
-.ld-job-cnt { font-weight:800; white-space:nowrap; }
-.ld-job-cnt small { font-weight:400; color:var(--muted); font-size:12px; }
+.learn-h { font-size: 16px; font-weight: 700; margin: 22px 2px 12px; }
+.ld-cause.job .ld-bar > i { background: var(--amber); opacity: .6; }
+.ld-cause.job .ld-cause-name { font-weight: 600; }
 </style>
 </head>
 <body>
@@ -2605,9 +2603,8 @@ function renderLearn(d) {
   }
   meta.textContent = parts.join(' • ');
 
-  const hazards = (d.hazards || []).map((h, i) => `
+  const hazards = (d.hazards || []).map(h => `
     <div class="hazard-card fade-up">
-      <div class="hazard-rank">จุดเสี่ยงอันดับ ${i + 1}</div>
       <div class="hazard-title">${learnEsc(h.title)}</div>
       ${h.why ? `<div class="hazard-why">${learnEsc(h.why)}</div>` : ''}
       ${(h.lessons || []).length ? `
@@ -2620,6 +2617,10 @@ function renderLearn(d) {
   const num = v => (v === undefined || v === null) ? '–' : Number(v).toLocaleString('th-TH');
   const causes = (st.top_causes || []).slice(0, 3);
   const maxC = Math.max(1, ...causes.map(c => Number(c.count) || 0));
+  const jobs = (st.top_jobs || (st.top_job ? [st.top_job] : [])).filter(j => j && j.name);
+  const maxJ = Math.max(1, ...jobs.map(j => Number(j.count) || 0));
+  // อันดับแบบเท่ากันได้ เช่น 14, 14, 10 → 1, 1, 3
+  const jobRank = j => 1 + jobs.filter(x => (Number(x.count) || 0) > (Number(j.count) || 0)).length;
   const dash = `
     <div class="card fade-up">
       <div class="section-label">ภาพรวมปีนี้</div>
@@ -2644,12 +2645,16 @@ function renderLearn(d) {
             </div>
             <div class="ld-bar"><i style="width:${Math.round((Number(c.count) || 0) / maxC * 100)}%"></i></div>
           </div>`).join('')}` : ''}
-      ${st.top_job && st.top_job.name ? `
-        <div class="ld-sub">ประเภทงานเสี่ยงสุด</div>
-        <div class="ld-job">
-          <span class="ld-job-name">${learnEsc(st.top_job.name)}</span>
-          <span class="ld-job-cnt">${num(st.top_job.count)} <small>เคส</small></span>
-        </div>` : ''}
+      ${jobs.length ? `
+        <div class="ld-sub">ประเภทงานเสี่ยงสุด 3 อันดับแรก</div>
+        ${jobs.map(j => `
+          <div class="ld-cause job">
+            <div class="ld-cause-row">
+              <span class="ld-cause-name">${jobRank(j)}. ${learnEsc(j.name)}</span>
+              <span class="ld-cause-cnt">${num(j.count)} <small>เคส</small></span>
+            </div>
+            <div class="ld-bar"><i style="width:${Math.round((Number(j.count) || 0) / maxJ * 100)}%"></i></div>
+          </div>`).join('')}` : ''}
     </div>`;
   const summary = dash;
 
@@ -2659,7 +2664,8 @@ function renderLearn(d) {
       <ul class="learn-patterns">${d.patterns.map(p => `<li>${learnEsc(p)}</li>`).join('')}</ul>
     </div>` : '';
 
-  document.getElementById('l-content').innerHTML = summary + hazards + patterns;
+  const hazardsHead = hazards ? '<div class="learn-h">จุดเสี่ยงที่ต้องระวังเป็นพิเศษ</div>' : '';
+  document.getElementById('l-content').innerHTML = summary + hazardsHead + hazards + patterns;
   animNum('ld-cases', 0, Number(d.n_cases) || 0, 700);
   if (st.deaths     != null) animNum('ld-dead',  0, Number(st.deaths),     700);
   if (st.injured    != null) animNum('ld-hurt',  0, Number(st.injured),    700);
