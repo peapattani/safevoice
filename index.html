@@ -563,6 +563,33 @@ body {
 }
 .learn-patterns li:first-child { border-top: none; padding-top: 0; }
 .learn-state { text-align: center; color: var(--muted); font-size: 14px; padding: 40px 10px; line-height: 1.7; }
+
+/* ── Learn: dashboard ── */
+.ld-total { display:flex; align-items:baseline; gap:8px; margin-bottom:14px; }
+.ld-total-num { font-size:44px; font-weight:900; line-height:1; color:var(--white); }
+.ld-total-lbl { font-size:14px; color:var(--muted); }
+.ld-tiles { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+.ld-tile { background:var(--navy); border:1px solid var(--border); border-radius:12px; padding:12px 8px; text-align:center; }
+.ld-tile-num { font-size:28px; font-weight:800; line-height:1.1; }
+.ld-tile-lbl { font-size:12px; color:var(--muted); margin-top:4px; }
+.ld-tile.dead .ld-tile-num { color:var(--red); }
+.ld-tile.hurt .ld-tile-num { color:var(--amber); }
+.ld-tile.organ .ld-tile-num { color:var(--ice); }
+.ld-sub { font-size:12px; font-weight:700; color:var(--muted); margin:18px 0 10px; }
+.ld-cause { margin-bottom:12px; }
+.ld-cause:last-child { margin-bottom:0; }
+.ld-cause-row { display:flex; justify-content:space-between; align-items:baseline; gap:10px; font-size:14px; margin-bottom:5px; }
+.ld-cause-name { flex:1; line-height:1.4; }
+.ld-cause-cnt { font-weight:800; white-space:nowrap; }
+.ld-cause-cnt small { font-weight:400; color:var(--muted); font-size:12px; }
+.ld-bar { height:8px; border-radius:4px; background:var(--navy); overflow:hidden; }
+.ld-bar > i { display:block; height:100%; border-radius:4px; background:var(--red); opacity:.55; }
+.ld-cause.first .ld-bar > i { opacity:1; }
+.ld-job { display:flex; justify-content:space-between; align-items:baseline; gap:10px;
+  background:var(--navy); border:1px solid var(--border); border-radius:12px; padding:12px 14px; }
+.ld-job-name { font-size:15px; font-weight:700; line-height:1.4; }
+.ld-job-cnt { font-weight:800; white-space:nowrap; }
+.ld-job-cnt small { font-weight:400; color:var(--muted); font-size:12px; }
 </style>
 </head>
 <body>
@@ -2589,11 +2616,42 @@ function renderLearn(d) {
       ${h.controls ? `<span class="hazard-control">มาตรการควบคุม: ${learnEsc(h.controls)}</span>` : ''}
     </div>`).join('');
 
-  const summary = d.summary ? `
+  const st = d.stats || {};
+  const num = v => (v === undefined || v === null) ? '–' : Number(v).toLocaleString('th-TH');
+  const causes = (st.top_causes || []).slice(0, 3);
+  const maxC = Math.max(1, ...causes.map(c => Number(c.count) || 0));
+  const dash = `
     <div class="card fade-up">
-      <div class="section-label">ภาพรวม</div>
-      <div class="learn-summary">${learnEsc(d.summary)}</div>
-    </div>` : '';
+      <div class="section-label">ภาพรวมปีนี้</div>
+      <div class="ld-total">
+        <span class="ld-total-num" id="ld-cases">0</span>
+        <span class="ld-total-lbl">เคส</span>
+      </div>
+      ${(st.deaths != null || st.injured != null || st.lost_organ != null) ? `
+      <div class="ld-tiles">
+        <div class="ld-tile dead"><div class="ld-tile-num" id="ld-dead">${st.deaths == null ? '–' : 0}</div><div class="ld-tile-lbl">เสียชีวิต (คน)</div></div>
+        <div class="ld-tile hurt"><div class="ld-tile-num" id="ld-hurt">${st.injured == null ? '–' : 0}</div><div class="ld-tile-lbl">บาดเจ็บ (คน)</div></div>
+        <div class="ld-tile organ"><div class="ld-tile-num" id="ld-organ">${st.lost_organ == null ? '–' : 0}</div><div class="ld-tile-lbl">เสียอวัยวะ (คน)</div></div>
+      </div>
+      ` : ''}
+      ${causes.length ? `
+        <div class="ld-sub">สาเหตุหลัก 3 อันดับแรก</div>
+        ${causes.map((c, i) => `
+          <div class="ld-cause${i === 0 ? ' first' : ''}">
+            <div class="ld-cause-row">
+              <span class="ld-cause-name">${i + 1}. ${learnEsc(c.name)}</span>
+              <span class="ld-cause-cnt">${num(c.count)} <small>ครั้ง</small></span>
+            </div>
+            <div class="ld-bar"><i style="width:${Math.round((Number(c.count) || 0) / maxC * 100)}%"></i></div>
+          </div>`).join('')}` : ''}
+      ${st.top_job && st.top_job.name ? `
+        <div class="ld-sub">ประเภทงานเสี่ยงสุด</div>
+        <div class="ld-job">
+          <span class="ld-job-name">${learnEsc(st.top_job.name)}</span>
+          <span class="ld-job-cnt">${num(st.top_job.count)} <small>เคส</small></span>
+        </div>` : ''}
+    </div>`;
+  const summary = dash;
 
   const patterns = (d.patterns || []).length ? `
     <div class="card fade-up">
@@ -2602,6 +2660,10 @@ function renderLearn(d) {
     </div>` : '';
 
   document.getElementById('l-content').innerHTML = summary + hazards + patterns;
+  animNum('ld-cases', 0, Number(d.n_cases) || 0, 700);
+  if (st.deaths     != null) animNum('ld-dead',  0, Number(st.deaths),     700);
+  if (st.injured    != null) animNum('ld-hurt',  0, Number(st.injured),    700);
+  if (st.lost_organ != null) animNum('ld-organ', 0, Number(st.lost_organ), 700);
 }
 
 // ═══════════════════════════════════════════════
