@@ -475,7 +475,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--navy);color:var(--white);
 
     <div class="tab-panel" id="p-analyze">
       <div class="panel-title">วิเคราะห์อุบัติเหตุ</div>
-      <div class="panel-sub">ยืนยันสิทธิ์เพื่อโหลดข้อมูล — จำแนกสาเหตุ ดูโซน/ความเสี่ยง และกำหนดมาตรการป้องกัน</div>
+      <div class="panel-sub">ยืนยันสิทธิ์เพื่อโหลดข้อมูล — ดูสถิติ โซน/ความเสี่ยง และอ่านรายละเอียดแต่ละเหตุการณ์ (สาเหตุรายเคสและมาตรการป้องกันกำหนดโดยเจ้าหน้าที่เองทั้งหมด)</div>
       <div class="card"><div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
         <div class="fg" style="margin:0;"><label class="fl">รหัสพนักงาน</label><input class="fi" id="an-code"></div>
         <div class="fg" style="margin:0;"><label class="fl">รหัสผ่าน</label><input class="fi" id="an-pw" type="password" autocomplete="off"></div>
@@ -2023,16 +2023,8 @@ async function acSave() {
 }
 
 // ══ ACCIDENT ANALYSIS (วิเคราะห์อุบัติเหตุ) ══
-const AN = { code: '', pw: '', rows: [], sel: null };
-const AN_CAUSES = ['ไม่สวมอุปกรณ์ป้องกันอันตรายส่วนบุคคล','ใช้อุปกรณ์ป้องกันอันตรายส่วนบุคคลไม่ถูกต้องหรือไม่เหมาะสม',
-  'ใช้เครื่องมือ อุปกรณ์การปฏิบัติงานไม่ถูกวิธีหรือไม่เหมาะสม','อุปกรณ์ เครื่องจักร เครื่องมือในการปฏิบัติงานไม่มี/ชำรุด',
-  'ขั้นตอนปฏิบัติงานไม่ถูกต้อง/ข้ามขั้นตอน','ปฏิบัติงานโดยไม่ได้รับอนุญาตจากผู้อนุญาต','ผู้ปฏิบัติงานขาดความรู้/ประสบการณ์ในงานที่ปฏิบัติ',
-  'ผู้ปฏิบัติงานประมาท/ขาดความระมัดระวัง','ขาดการประสานงานที่ดี','ขาดการออกแบบสถานที่/การปฏิบัติงานที่ดี',
-  'สถานที่ทำงานคับแคบหรือจำกัดมีสิ่งกีดขวาง','สภาพแวดล้อมไม่ปลอดภัย เช่น แสง เสียง ความร้อนหรืออื่นๆ','การจัดวางท่าทางการปฏิบัติงานไม่ปลอดภัย',
-  'ระบบไฟฟ้าหรืออุปกรณ์ไฟฟ้าชำรุด หรือบกพร่อง','วัสดุอุปกรณ์วางไม่เป็นระเบียบ','บุคคลอื่นมากระทำ','ไม่มี/ไม่ใส่ใจในคำแนะนำหรือการตักเตือน',
-  'ปฏิบัติงานโดยที่จิตใจไม่พร้อมหรือผิดปกติ','ปฏิบัติงานโดยไม่ใช่หน้าที่','อื่นๆ'];
-const AN_LEVELS = ['ขจัด (Elimination)','ทดแทน (Substitution)','วิศวกรรม (Engineering)','บริหารจัดการ (Administrative)','PPE'];
-const anCauses = r => (r.a_causes && r.a_causes.length) ? r.a_causes : (r.causes || []);
+const AN = { code: '', pw: '', rows: [], syn: null };
+const anCauses = r => r.causes || [];
 
 function anTally(rows, f) { const m = {}; rows.forEach(r => [].concat(f(r)).forEach(k => { if (k) m[k] = (m[k] || 0) + 1; })); return Object.entries(m).sort((a, b) => b[1] - a[1]); }
 function anBars(list, max, col) { return list.map(([k, n]) => `<div style="display:flex;align-items:center;gap:8px;margin:5px 0;font-size:12px;"><span style="width:150px;flex-shrink:0;">${acEsc(k)}</span><div style="flex:1;background:var(--navy);border-radius:5px;height:14px;"><div style="width:${n / max * 100}%;background:${col};height:100%;border-radius:5px;"></div></div><b style="width:26px;text-align:right;">${n}</b></div>`).join(''); }
@@ -2054,7 +2046,6 @@ function anRender() {
   const zone = anTally(R, r => r.zone), types = anTally(R, r => r.accident_type), jobs = anTally(R, r => r.job_type).slice(0, 6);
   const cause = anTally(R, anCauses).slice(0, 8), sev = anTally(R, r => r.severity || 'ไม่ระบุ');
   const card = (n, l, c) => `<div class="stat-card"><div class="stat-num" style="color:${c}">${n}</div><div class="stat-lbl">${l}</div></div>`;
-  // Risk: โอกาส (สัดส่วนเหตุ) + ความรุนแรงสูงสุด → ระดับ
   const risk = types.map(([t, n]) => {
     const rs = R.filter(r => r.accident_type === t), d = rs.reduce((a, r) => a + r.deaths, 0), l = rs.reduce((a, r) => a + r.limb_loss, 0);
     const L = n / N >= .2 ? 3 : n / N >= .08 ? 2 : 1, S = d ? 3 : l ? 2 : 1, sc = L + S;
@@ -2063,109 +2054,61 @@ function anRender() {
   }).join('');
   const tt = types.slice(0, 5).map(x => x[0]);
   const mx = jobs.map(([j]) => `<tr><td>${acEsc(j)}</td>${tt.map(t => { const n = R.filter(r => r.job_type === j && r.accident_type === t).length; return `<td style="text-align:center;${n ? 'color:var(--green);font-weight:700;' : 'color:var(--muted);'}">${n || '·'}</td>`; }).join('')}</tr>`).join('');
-  const ev = R.map(r => { const has = anCauses(r).length > 0; const badge = r.ai_status === 'draft' ? ' <span style="color:var(--amber)">🤖 รอตรวจ</span>' : (r.ai_status === 'approved' ? ' <span style="color:var(--green)">✔ อนุมัติแล้ว</span>' : ''); return `<tr><td>${r.di_no}</td><td>${r.occurred_date || '—'}</td><td>${acEsc(r.zone || '—')}</td><td>${acEsc(r.accident_type || '—')}</td><td>${acEsc(r.severity || '—')}</td><td style="color:${has ? 'var(--green)' : 'var(--amber)'}">${has ? 'ระบุสาเหตุแล้ว' : 'ไม่ระบุสาเหตุ'}${badge}</td><td><button class="btn-sm" onclick="anDetail(${r.di_no})">รายละเอียด</button></td></tr>`; }).join('');
+  const ev = R.map(r => { const has = anCauses(r).length > 0; return `<tr><td>${r.di_no}</td><td>${r.occurred_date || '—'}</td><td>${acEsc(r.zone || '—')}</td><td>${acEsc(r.accident_type || '—')}</td><td>${acEsc(r.severity || '—')}</td><td style="color:${has ? 'var(--green)' : 'var(--amber)'}">${has ? 'ระบุสาเหตุแล้ว' : 'ไม่ระบุสาเหตุ'}</td><td><button class="btn-sm" onclick="anDetail(${r.di_no})">รายละเอียด</button></td></tr>`; }).join('');
   document.getElementById('an-body').innerHTML = `
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:14px;">
-      ${card(N, 'เหตุการณ์', 'var(--green)')}${card(sum('deaths'), 'เสียชีวิต (คน)', 'var(--red)')}${card(sum('injured'), 'บาดเจ็บ (คน)', 'var(--amber)')}${card(todo, 'ยังไม่มีสาเหตุ', 'var(--amber)')}</div>
+      ${card(N, 'เหตุการณ์', 'var(--green)')}${card(sum('deaths'), 'เสียชีวิต (คน)', 'var(--red)')}${card(sum('injured'), 'บาดเจ็บ (คน)', 'var(--amber)')}${card(todo, 'ไม่ระบุสาเหตุ', 'var(--amber)')}</div>
     <div class="card"><div class="section-label">แยกตามโซน</div>${anBars(zone, zone[0][1], 'var(--green)')}</div>
     <div class="card"><div class="section-label">ระดับความรุนแรง (สูงสุดของเหตุการณ์)</div>${anBars(sev, sev[0][1], 'var(--red)')}</div>
-    <div class="card"><div class="section-label">สาเหตุที่พบบ่อย (รวมที่ Admin จัดเพิ่ม)</div>${cause.length ? anBars(cause, cause[0][1], 'var(--amber)') : '<span style="color:var(--muted)">ยังไม่มีข้อมูลสาเหตุ</span>'}</div>
+    <div class="card"><div class="section-label">สาเหตุที่พบบ่อย (จากระบบส่วนกลาง)</div>${cause.length ? anBars(cause, cause[0][1], 'var(--amber)') : '<span style="color:var(--muted)">ยังไม่มีข้อมูลสาเหตุ</span>'}</div>
     <div class="card"><div class="section-label">โอกาสเกิด × ความรุนแรง ตามลักษณะเหตุ</div>
       <div style="overflow:auto;"><table class="tbl"><thead><tr><th>ลักษณะเหตุ</th><th>เหตุ</th><th>ตาย</th><th>โอกาส</th><th>ระดับความเสี่ยง</th></tr></thead><tbody>${risk}</tbody></table></div>
       <div style="font-size:11px;color:var(--muted);margin-top:8px;">ข้อมูล ${N} เหตุ ใช้เป็นระดับประกอบดุลยพินิจ ไม่ใช่ความน่าจะเป็น</div></div>
     <div class="card"><div class="section-label">ความเชื่อมโยง ประเภทงาน × ลักษณะเหตุ</div>
       <div style="overflow:auto;"><table class="tbl"><thead><tr><th>ประเภทงาน</th>${tt.map(t => `<th>${acEsc(t)}</th>`).join('')}</tr></thead><tbody>${mx}</tbody></table></div></div>
     ${anSynHtml()}
-    <div class="card"><div class="section-label">🤖 AI ผู้เชี่ยวชาญ</div><div style="font-size:12px;color:var(--muted);margin-bottom:10px;">ให้ AI ช่วยจำแนกสาเหตุและร่างมาตรการป้องกันให้ทุกเคสที่ยังไม่มี (Sonnet 5) แล้วสังเคราะห์ภาพรวมข้ามเคสทีเดียว (Opus 5.5) — เจ้าหน้าที่ตรวจและกดอนุมัติเป็นรายเคสในปุ่ม "รายละเอียด" ด้านล่าง</div><button class="btn-prim" id="an-ai" onclick="anAiBatch()">🤖 ให้ AI ช่วยวิเคราะห์ทั้งชุด</button> <span id="an-aimsg" style="font-size:12px;margin-left:8px;"></span></div>
+    <div class="card"><div class="section-label">🤖 AI ผู้เชี่ยวชาญ</div><div style="font-size:12px;color:var(--muted);margin-bottom:10px;">ให้ AI (Opus 5.5) อ่านทุกเคสพร้อมกัน สรุปรูปแบบซ้ำ จุดเสี่ยงสำคัญ และบทเรียนสำหรับพนักงาน — สาเหตุรายเคสและมาตรการป้องกันยังคงกำหนดโดยเจ้าหน้าที่ทั้งหมด ไม่ใช่ AI</div><button class="btn-prim" id="an-ai" onclick="anAiBatch()">🤖 สรุปภาพรวมด้วย AI</button> <span id="an-aimsg" style="font-size:12px;margin-left:8px;"></span></div>
     <div id="an-edit"></div>
-    <div class="card"><div class="section-label">รายการเหตุการณ์ — กด "รายละเอียด" เพื่อดูเหตุการณ์และตรวจร่างของ AI</div>
-      <div style="overflow:auto;max-height:460px;"><table class="tbl"><thead><tr><th>DI</th><th>วันที่</th><th>โซน</th><th>ลักษณะ</th><th>รุนแรง</th><th>สาเหตุ/มาตรการ</th><th></th></tr></thead><tbody>${ev}</tbody></table></div></div>`;
+    <div class="card"><div class="section-label">รายการเหตุการณ์ — กด "รายละเอียด" เพื่ออ่านเหตุการณ์</div>
+      <div style="overflow:auto;max-height:460px;"><table class="tbl"><thead><tr><th>DI</th><th>วันที่</th><th>โซน</th><th>ลักษณะ</th><th>รุนแรง</th><th>สาเหตุ</th><th></th></tr></thead><tbody>${ev}</tbody></table></div></div>`;
 }
 
 function anDetail(di) {
   const r = AN.rows.find(x => x.di_no === di), box = document.getElementById('an-edit');
   const central = (r.causes && r.causes.length) ? r.causes : null;
-  const hasDraft = !!(r.a_measures || (r.a_causes && r.a_causes.length));
-  const aiBlock = hasDraft ? `
-    <div style="background:var(--navy);border:1px solid ${r.ai_status === 'approved' ? 'var(--green)' : 'var(--amber)'};border-radius:10px;padding:12px;margin:10px 0;">
-      <b style="color:${r.ai_status === 'approved' ? 'var(--green)' : 'var(--amber)'}">${r.ai_status === 'approved' ? '✔ อนุมัติแล้ว' : '🤖 ร่างจาก AI'}${r.ai_conf ? ' · ความมั่นใจ: ' + acEsc(r.ai_conf) : ''}</b>
-      ${r.ai_why ? `<div style="font-size:12px;margin-top:6px;line-height:1.6;">${acEsc(r.ai_why).replace(/\n/g, '<br>')}</div>` : ''}
-      <div style="font-size:12px;margin-top:8px;"><b>สาเหตุ:</b> ${(r.a_causes || []).map(acEsc).join(' · ') || '<span style="color:var(--muted)">—</span>'}</div>
-      ${r.ai_evidence ? `<div style="font-size:11px;color:var(--muted);margin-top:4px;">หลักฐาน: ${acEsc(r.ai_evidence)}</div>` : ''}
-      <div class="fg" style="margin-top:10px;"><label class="fl">ระดับมาตรการ</label>
-        <select class="fi" id="an-lv"><option value="">— เลือก —</option>${AN_LEVELS.map(l => `<option ${r.a_level === l ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
-      <div class="fg"><label class="fl">มาตรการป้องกัน (แก้ไขได้ก่อนอนุมัติ)</label><textarea class="fi" id="an-ms" rows="4">${acEsc(r.a_measures || '')}</textarea></div>
-      <button class="btn-prim" onclick="anApprove(${di})">✔ อนุมัติ</button> <span id="an-sv" style="font-size:12px;"></span>
-    </div>` : `
-    <div style="font-size:12px;color:var(--muted);margin:10px 0;">ยังไม่มีร่างจาก AI สำหรับเคสนี้</div>
-    <button class="btn-sm" onclick="anOne(${di})" id="an-one-${di}">🤖 ให้ AI วิเคราะห์เคสนี้</button>`;
   box.innerHTML = `<div class="card" style="border-color:var(--green);">
     <div class="section-label">DI ${di} — ${acEsc(r.accident_type || '')} · ${acEsc(r.job_type || '')} · ${acEsc(r.zone || '—')} · ${acEsc(r.occurred_date || '—')}</div>
     <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">ระดับความรุนแรง: ${acEsc(r.severity || '—')} · ตาย ${r.deaths} · บาดเจ็บ ${r.injured} · สูญเสียอวัยวะ ${r.limb_loss}</div>
-    <div style="font-size:13px;line-height:1.7;margin-bottom:4px;color:var(--ice);white-space:pre-wrap;">${acEsc(r.description || '—')}</div>
-    ${central ? `<div style="font-size:12px;"><b>สาเหตุจากระบบส่วนกลาง:</b> ${central.map(acEsc).join(' · ')}</div>` : ''}
-    ${aiBlock}
-    <button class="btn-sm" style="margin-top:10px;" onclick="document.getElementById('an-edit').innerHTML=''">ปิด</button></div>`;
+    <div style="font-size:13px;line-height:1.7;margin-bottom:8px;color:var(--ice);white-space:pre-wrap;">${acEsc(r.description || '—')}</div>
+    <div style="font-size:12px;"><b>สาเหตุจากระบบส่วนกลาง:</b> ${central ? central.map(acEsc).join(' · ') : '<span style="color:var(--muted)">ไม่ระบุ</span>'}</div>
+    <button class="btn-sm" style="margin-top:12px;" onclick="document.getElementById('an-edit').innerHTML=''">ปิด</button></div>`;
   box.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
-async function anOne(di) {
-  const btn = document.getElementById(`an-one-${di}`); if (btn) { btn.disabled = true; btn.textContent = '⏳ กำลังวิเคราะห์...'; }
-  try {
-    const j = await anCall({ mode: 'classify', di_nos: [di] });
-    const row = (j.rows || [])[0];
-    if (row) { const r = AN.rows.find(x => x.di_no === di); Object.assign(r, { a_causes: row.root_causes, a_level: row.control_level, a_measures: row.measures, ai_status: 'draft', ai_conf: row.ai_conf, ai_evidence: row.ai_evidence, ai_why: row.ai_why }); }
-    anRender(); anDetail(di);
-  } catch (e) { if (btn) { btn.disabled = false; btn.textContent = '🤖 ให้ AI วิเคราะห์เคสนี้'; } showToast('❌ ' + e.message, 'error'); }
-}
-
-async function anApprove(di) {
-  const lv = document.getElementById('an-lv').value, ms = document.getElementById('an-ms').value.trim();
-  const sv = document.getElementById('an-sv'); sv.textContent = '⏳';
-  try {
-    const r = AN.rows.find(x => x.di_no === di);
-    const res = await fetch(`${SB_URL}/rest/v1/rpc/accident_save_analysis`, { method: 'POST', headers: sbHeaders, body: JSON.stringify({ p_emp_code: AN.code, p_password: AN.pw, p_di: di, p_causes: r.a_causes || [], p_level: lv || null, p_measures: ms || null }) });
-    if (!res.ok) { const j = await res.json().catch(() => ({})); throw new Error(j.message || res.status); }
-    Object.assign(r, { a_level: lv || null, a_measures: ms || null, ai_status: 'approved' });
-    showToast('✅ อนุมัติแล้ว'); anRender(); anDetail(di);
-  } catch (e) { sv.innerHTML = `<span style="color:var(--red)">❌ ${acEsc(e.message)}</span>`; }
-}
-
-AN.syn = null;
 async function anLoadSyn() {
   try { const res = await fetch(`${SB_URL}/rest/v1/rpc/accident_get_synthesis`, { method: 'POST', headers: sbHeaders, body: JSON.stringify({ p_emp_code: AN.code, p_password: AN.pw }) });
-    if (res.ok) { AN.syn = await res.json(); anRender(); } } catch (e) {}
+    if (res.ok) { const j = await res.json(); if (j) { AN.syn = j; anRender(); } } } catch (e) {}
 }
 function anSynHtml() {
   const o = AN.syn && AN.syn.result; if (!o) return '';
   const L = a => (a || []).map(x => `<li>${acEsc(x)}</li>`).join('');
-  return `<div class="card" style="border-color:var(--amber);"><div class="section-label">🤖 สังเคราะห์ภาพรวมโดย AI (ร่าง · ${AN.syn.n_cases} เคส · ${acEsc(AN.syn.model || '')})</div>
+  return `<div class="card" style="border-color:var(--amber);"><div class="section-label">🤖 สังเคราะห์ภาพรวมโดย AI (${AN.syn.n_cases} เคส · ${acEsc(AN.syn.model || '')})</div>
     <div style="font-size:13px;line-height:1.7;margin-bottom:10px;">${acEsc(o.summary || '')}</div>
     <b style="font-size:12px;">รูปแบบข้ามเคส</b><ul style="font-size:12px;line-height:1.7;margin:4px 0 12px 18px;">${L(o.patterns)}</ul>
     ${(o.hazards || []).map(h => `<div style="background:var(--navy);border-radius:10px;padding:10px 12px;margin-bottom:8px;font-size:12px;line-height:1.6;"><b style="color:var(--amber)">${acEsc(h.title)}</b> — ${acEsc(h.why)}<ul style="margin:4px 0 0 18px;">${L(h.lessons)}</ul><span style="color:var(--muted)">เน้นมาตรการ: ${acEsc(h.controls || '')}</span></div>`).join('')}
     <b style="font-size:12px;">ข้อจำกัด/ควรตรวจซ้ำ</b><ul style="font-size:12px;line-height:1.7;margin:4px 0 0 18px;">${L(o.gaps)}</ul></div>`;
 }
-async function anCall(body) {
-  const res = await fetch(`${SB_URL}/functions/v1/accident-ai`, { method: 'POST', headers: sbHeaders, body: JSON.stringify({ emp_code: AN.code, password: AN.pw, ...body }) });
-  const j = await res.json().catch(() => ({})); if (!res.ok || !j.ok) throw new Error(j.error || res.status); return j;
-}
+
 async function anAiBatch() {
-  const todo = AN.rows.filter(r => !r.a_measures && r.ai_status !== 'approved').map(r => r.di_no);
   const btn = document.getElementById('an-ai'), msg = document.getElementById('an-aimsg');
-  btn.disabled = true;
+  btn.disabled = true; msg.textContent = '⏳ กำลังให้ AI สังเคราะห์ภาพรวม (ใช้เวลาสักครู่ อย่าปิดหน้านี้)...';
   try {
-    const SZ = 6;
-    for (let i = 0; i < todo.length; i += SZ) {
-      msg.textContent = `⏳ ให้ AI ช่วยจำแนกสาเหตุ/ร่างมาตรการ ${Math.min(i + SZ, todo.length)}/${todo.length}...`;
-      const j = await anCall({ mode: 'classify', di_nos: todo.slice(i, i + SZ) });
-      (j.rows || []).forEach(x => { const r = AN.rows.find(y => y.di_no === x.di_no); if (r) Object.assign(r, { a_causes: x.root_causes, a_level: x.control_level, a_measures: x.measures, ai_status: 'draft', ai_conf: x.ai_conf, ai_evidence: x.ai_evidence, ai_why: x.ai_why }); });
-      anRender();
-    }
-    msg.textContent = '⏳ สังเคราะห์ภาพรวมทั้งหมด (ใช้เวลาสักครู่)...';
-    const s = await anCall({ mode: 'synthesize' });
-    AN.syn = { result: s.result, n_cases: s.n_cases, model: 'claude-opus-5-5' }; anRender();
-    document.getElementById('an-aimsg').textContent = '✅ เสร็จแล้ว — ตรวจร่างทีละเคสในปุ่ม "รายละเอียด" แล้วกดอนุมัติ';
-  } catch (e) { anRender(); const m2 = document.getElementById('an-aimsg'); if (m2) m2.innerHTML = `<span style="color:var(--red)">❌ ${acEsc(e.message)} (เคสที่เสร็จแล้วถูกบันทึกไว้ กดใหม่เพื่อทำต่อ)</span>`; }
+    const res = await fetch(`${SB_URL}/functions/v1/accident-ai`, { method: 'POST', headers: sbHeaders, body: JSON.stringify({ emp_code: AN.code, password: AN.pw, mode: 'synthesize' }) });
+    const j = await res.json().catch(() => ({}));
+    if (!res.ok || !j.ok) throw new Error(j.error || `เซิร์ฟเวอร์ตอบ ${res.status}`);
+    AN.syn = { result: j.result, n_cases: j.n_cases, model: 'claude-opus-5-5' }; anRender();
+    document.getElementById('an-aimsg').textContent = '✅ เสร็จแล้ว';
+  } catch (e) { msg.innerHTML = `<span style="color:var(--red)">❌ ${acEsc(e.message)}</span>`; }
   btn.disabled = false;
 }
 
