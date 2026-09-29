@@ -2063,7 +2063,7 @@ function anRender() {
   }).join('');
   const tt = types.slice(0, 5).map(x => x[0]);
   const mx = jobs.map(([j]) => `<tr><td>${acEsc(j)}</td>${tt.map(t => { const n = R.filter(r => r.job_type === j && r.accident_type === t).length; return `<td style="text-align:center;${n ? 'color:var(--green);font-weight:700;' : 'color:var(--muted);'}">${n || '·'}</td>`; }).join('')}</tr>`).join('');
-  const ev = R.map(r => { const c = anCauses(r).length; return `<tr><td>${r.di_no}</td><td>${r.occurred_date || '—'}</td><td>${acEsc(r.zone || '—')}</td><td>${acEsc(r.accident_type || '—')}</td><td>${acEsc(r.severity || '—')}</td><td style="color:${c ? 'var(--green)' : 'var(--amber)'}">${c ? '✔ ' + c : 'ยังไม่มี'}${r.a_level ? ' · ' + acEsc(r.a_level.split(' ')[0]) : ''}${r.ai_status === 'draft' ? ' <span style="color:var(--amber)">🤖 ร่าง·' + acEsc(r.ai_conf || '') + '</span>' : ''}</td><td><button class="btn-sm" onclick="anEdit(${r.di_no})">วิเคราะห์</button></td></tr>`; }).join('');
+  const ev = R.map(r => { const has = anCauses(r).length > 0; const badge = r.ai_status === 'draft' ? ' <span style="color:var(--amber)">🤖 รอตรวจ</span>' : (r.ai_status === 'approved' ? ' <span style="color:var(--green)">✔ อนุมัติแล้ว</span>' : ''); return `<tr><td>${r.di_no}</td><td>${r.occurred_date || '—'}</td><td>${acEsc(r.zone || '—')}</td><td>${acEsc(r.accident_type || '—')}</td><td>${acEsc(r.severity || '—')}</td><td style="color:${has ? 'var(--green)' : 'var(--amber)'}">${has ? 'ระบุสาเหตุแล้ว' : 'ไม่ระบุสาเหตุ'}${badge}</td><td><button class="btn-sm" onclick="anDetail(${r.di_no})">รายละเอียด</button></td></tr>`; }).join('');
   document.getElementById('an-body').innerHTML = `
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:14px;">
       ${card(N, 'เหตุการณ์', 'var(--green)')}${card(sum('deaths'), 'เสียชีวิต (คน)', 'var(--red)')}${card(sum('injured'), 'บาดเจ็บ (คน)', 'var(--amber)')}${card(todo, 'ยังไม่มีสาเหตุ', 'var(--amber)')}</div>
@@ -2076,33 +2076,58 @@ function anRender() {
     <div class="card"><div class="section-label">ความเชื่อมโยง ประเภทงาน × ลักษณะเหตุ</div>
       <div style="overflow:auto;"><table class="tbl"><thead><tr><th>ประเภทงาน</th>${tt.map(t => `<th>${acEsc(t)}</th>`).join('')}</tr></thead><tbody>${mx}</tbody></table></div></div>
     ${anSynHtml()}
-    <div class="card"><div class="section-label">🤖 AI ผู้เชี่ยวชาญ</div><div style="font-size:12px;color:var(--muted);margin-bottom:10px;">จำแนกรายเคสเป็นชุด ๆ (Sonnet 5) แล้วสังเคราะห์ภาพรวมข้ามเคสทีเดียว (Opus 5.5) ส่งเฉพาะเคสใหม่ที่ยังไม่มีผล — ผลเป็น "ร่าง" ให้คุณตรวจ</div><button class="btn-prim" id="an-ai" onclick="anAiBatch()">🤖 วิเคราะห์ทั้งชุดด้วย AI</button> <span id="an-aimsg" style="font-size:12px;margin-left:8px;"></span></div>
+    <div class="card"><div class="section-label">🤖 AI ผู้เชี่ยวชาญ</div><div style="font-size:12px;color:var(--muted);margin-bottom:10px;">ให้ AI ช่วยจำแนกสาเหตุและร่างมาตรการป้องกันให้ทุกเคสที่ยังไม่มี (Sonnet 5) แล้วสังเคราะห์ภาพรวมข้ามเคสทีเดียว (Opus 5.5) — เจ้าหน้าที่ตรวจและกดอนุมัติเป็นรายเคสในปุ่ม "รายละเอียด" ด้านล่าง</div><button class="btn-prim" id="an-ai" onclick="anAiBatch()">🤖 ให้ AI ช่วยวิเคราะห์ทั้งชุด</button> <span id="an-aimsg" style="font-size:12px;margin-left:8px;"></span></div>
     <div id="an-edit"></div>
-    <div class="card"><div class="section-label">รายการเหตุการณ์ — กด "วิเคราะห์" เพื่อจัดสาเหตุและกำหนดมาตรการ</div>
+    <div class="card"><div class="section-label">รายการเหตุการณ์ — กด "รายละเอียด" เพื่อดูเหตุการณ์และตรวจร่างของ AI</div>
       <div style="overflow:auto;max-height:460px;"><table class="tbl"><thead><tr><th>DI</th><th>วันที่</th><th>โซน</th><th>ลักษณะ</th><th>รุนแรง</th><th>สาเหตุ/มาตรการ</th><th></th></tr></thead><tbody>${ev}</tbody></table></div></div>`;
 }
 
-function anEdit(di) {
-  const r = AN.rows.find(x => x.di_no === di), cur = anCauses(r), box = document.getElementById('an-edit');
-  box.innerHTML = `<div class="card" style="border-color:var(--green);"><div class="section-label">วิเคราะห์ DI ${di} — ${acEsc(r.accident_type || '')} · ${acEsc(r.job_type || '')} · ${acEsc(r.zone || '')}</div>
-    <div style="font-size:13px;line-height:1.6;margin-bottom:12px;color:var(--ice);">${acEsc(r.description || '')}</div>
-    ${r.ai_status === 'draft' ? `<div style="background:var(--navy);border:1px solid var(--amber);border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:12px;line-height:1.6;"><b style="color:var(--amber)">🤖 ร่างจาก AI · ความมั่นใจ: ${acEsc(r.ai_conf || '')}</b><br>${acEsc(r.ai_why || '').replace(/\n/g, '<br>')}<br><span style="color:var(--muted)">หลักฐาน: ${acEsc(r.ai_evidence || '—')}</span></div>` : ''}
-    <label class="fl">สาเหตุ (เลือกได้หลายข้อ)</label>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:4px 12px;margin:6px 0 12px;font-size:12px;">${AN_CAUSES.map((c, i) => `<label style="display:flex;gap:6px;cursor:pointer;"><input type="checkbox" class="an-c" value="${i}" ${cur.includes(c) ? 'checked' : ''}>${acEsc(c)}</label>`).join('')}</div>
-    <div class="fg"><label class="fl">ระดับมาตรการ (ลำดับชั้นการควบคุม)</label><select class="fi" id="an-lv"><option value="">— เลือก —</option>${AN_LEVELS.map(l => `<option ${r.a_level === l ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
-    <div class="fg"><label class="fl">มาตรการป้องกัน</label><textarea class="fi" id="an-ms" rows="3">${acEsc(r.a_measures || '')}</textarea></div>
-    <button class="btn-prim" onclick="anSave(${di})">💾 บันทึกผลวิเคราะห์</button> <span id="an-sv" style="font-size:12px;"></span></div>`;
+function anDetail(di) {
+  const r = AN.rows.find(x => x.di_no === di), box = document.getElementById('an-edit');
+  const central = (r.causes && r.causes.length) ? r.causes : null;
+  const hasDraft = !!(r.a_measures || (r.a_causes && r.a_causes.length));
+  const aiBlock = hasDraft ? `
+    <div style="background:var(--navy);border:1px solid ${r.ai_status === 'approved' ? 'var(--green)' : 'var(--amber)'};border-radius:10px;padding:12px;margin:10px 0;">
+      <b style="color:${r.ai_status === 'approved' ? 'var(--green)' : 'var(--amber)'}">${r.ai_status === 'approved' ? '✔ อนุมัติแล้ว' : '🤖 ร่างจาก AI'}${r.ai_conf ? ' · ความมั่นใจ: ' + acEsc(r.ai_conf) : ''}</b>
+      ${r.ai_why ? `<div style="font-size:12px;margin-top:6px;line-height:1.6;">${acEsc(r.ai_why).replace(/\n/g, '<br>')}</div>` : ''}
+      <div style="font-size:12px;margin-top:8px;"><b>สาเหตุ:</b> ${(r.a_causes || []).map(acEsc).join(' · ') || '<span style="color:var(--muted)">—</span>'}</div>
+      ${r.ai_evidence ? `<div style="font-size:11px;color:var(--muted);margin-top:4px;">หลักฐาน: ${acEsc(r.ai_evidence)}</div>` : ''}
+      <div class="fg" style="margin-top:10px;"><label class="fl">ระดับมาตรการ</label>
+        <select class="fi" id="an-lv"><option value="">— เลือก —</option>${AN_LEVELS.map(l => `<option ${r.a_level === l ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
+      <div class="fg"><label class="fl">มาตรการป้องกัน (แก้ไขได้ก่อนอนุมัติ)</label><textarea class="fi" id="an-ms" rows="4">${acEsc(r.a_measures || '')}</textarea></div>
+      <button class="btn-prim" onclick="anApprove(${di})">✔ อนุมัติ</button> <span id="an-sv" style="font-size:12px;"></span>
+    </div>` : `
+    <div style="font-size:12px;color:var(--muted);margin:10px 0;">ยังไม่มีร่างจาก AI สำหรับเคสนี้</div>
+    <button class="btn-sm" onclick="anOne(${di})" id="an-one-${di}">🤖 ให้ AI วิเคราะห์เคสนี้</button>`;
+  box.innerHTML = `<div class="card" style="border-color:var(--green);">
+    <div class="section-label">DI ${di} — ${acEsc(r.accident_type || '')} · ${acEsc(r.job_type || '')} · ${acEsc(r.zone || '—')} · ${acEsc(r.occurred_date || '—')}</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">ระดับความรุนแรง: ${acEsc(r.severity || '—')} · ตาย ${r.deaths} · บาดเจ็บ ${r.injured} · สูญเสียอวัยวะ ${r.limb_loss}</div>
+    <div style="font-size:13px;line-height:1.7;margin-bottom:4px;color:var(--ice);white-space:pre-wrap;">${acEsc(r.description || '—')}</div>
+    ${central ? `<div style="font-size:12px;"><b>สาเหตุจากระบบส่วนกลาง:</b> ${central.map(acEsc).join(' · ')}</div>` : ''}
+    ${aiBlock}
+    <button class="btn-sm" style="margin-top:10px;" onclick="document.getElementById('an-edit').innerHTML=''">ปิด</button></div>`;
   box.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
-async function anSave(di) {
-  const causes = [...document.querySelectorAll('.an-c:checked')].map(x => AN_CAUSES[+x.value]), lv = document.getElementById('an-lv').value, ms = document.getElementById('an-ms').value.trim();
+async function anOne(di) {
+  const btn = document.getElementById(`an-one-${di}`); if (btn) { btn.disabled = true; btn.textContent = '⏳ กำลังวิเคราะห์...'; }
+  try {
+    const j = await anCall({ mode: 'classify', di_nos: [di] });
+    const row = (j.rows || [])[0];
+    if (row) { const r = AN.rows.find(x => x.di_no === di); Object.assign(r, { a_causes: row.root_causes, a_level: row.control_level, a_measures: row.measures, ai_status: 'draft', ai_conf: row.ai_conf, ai_evidence: row.ai_evidence, ai_why: row.ai_why }); }
+    anRender(); anDetail(di);
+  } catch (e) { if (btn) { btn.disabled = false; btn.textContent = '🤖 ให้ AI วิเคราะห์เคสนี้'; } showToast('❌ ' + e.message, 'error'); }
+}
+
+async function anApprove(di) {
+  const lv = document.getElementById('an-lv').value, ms = document.getElementById('an-ms').value.trim();
   const sv = document.getElementById('an-sv'); sv.textContent = '⏳';
   try {
-    const res = await fetch(`${SB_URL}/rest/v1/rpc/accident_save_analysis`, { method: 'POST', headers: sbHeaders, body: JSON.stringify({ p_emp_code: AN.code, p_password: AN.pw, p_di: di, p_causes: causes, p_level: lv || null, p_measures: ms || null }) });
+    const r = AN.rows.find(x => x.di_no === di);
+    const res = await fetch(`${SB_URL}/rest/v1/rpc/accident_save_analysis`, { method: 'POST', headers: sbHeaders, body: JSON.stringify({ p_emp_code: AN.code, p_password: AN.pw, p_di: di, p_causes: r.a_causes || [], p_level: lv || null, p_measures: ms || null }) });
     if (!res.ok) { const j = await res.json().catch(() => ({})); throw new Error(j.message || res.status); }
-    const r = AN.rows.find(x => x.di_no === di); r.a_causes = causes; r.a_level = lv || null; r.a_measures = ms || null;
-    showToast('✅ บันทึกแล้ว'); anRender(); document.getElementById('an-edit').innerHTML = '';
+    Object.assign(r, { a_level: lv || null, a_measures: ms || null, ai_status: 'approved' });
+    showToast('✅ อนุมัติแล้ว'); anRender(); anDetail(di);
   } catch (e) { sv.innerHTML = `<span style="color:var(--red)">❌ ${acEsc(e.message)}</span>`; }
 }
 
@@ -2125,21 +2150,22 @@ async function anCall(body) {
   const j = await res.json().catch(() => ({})); if (!res.ok || !j.ok) throw new Error(j.error || res.status); return j;
 }
 async function anAiBatch() {
-  const todo = AN.rows.filter(r => !r.ai_status).map(r => r.di_no), btn = document.getElementById('an-ai'), msg = document.getElementById('an-aimsg');
-  if (!todo.length && !confirm('ทุกเคสมีผลแล้ว — สังเคราะห์ภาพรวมใหม่อย่างเดียวหรือไม่?')) return;
+  const todo = AN.rows.filter(r => !r.a_measures && r.ai_status !== 'approved').map(r => r.di_no);
+  const btn = document.getElementById('an-ai'), msg = document.getElementById('an-aimsg');
   btn.disabled = true;
   try {
     const SZ = 6;
     for (let i = 0; i < todo.length; i += SZ) {
-      msg.textContent = `⏳ จำแนกรายเคส ${Math.min(i + SZ, todo.length)}/${todo.length}...`;
+      msg.textContent = `⏳ ให้ AI ช่วยจำแนกสาเหตุ/ร่างมาตรการ ${Math.min(i + SZ, todo.length)}/${todo.length}...`;
       const j = await anCall({ mode: 'classify', di_nos: todo.slice(i, i + SZ) });
-      j.rows.forEach(x => { const r = AN.rows.find(y => y.di_no === x.di_no); if (r) Object.assign(r, { a_causes: x.root_causes, a_level: x.control_level, a_measures: x.measures, ai_status: 'draft', ai_conf: x.ai_conf, ai_evidence: x.ai_evidence, ai_why: x.ai_why }); });
+      (j.rows || []).forEach(x => { const r = AN.rows.find(y => y.di_no === x.di_no); if (r) Object.assign(r, { a_causes: x.root_causes, a_level: x.control_level, a_measures: x.measures, ai_status: 'draft', ai_conf: x.ai_conf, ai_evidence: x.ai_evidence, ai_why: x.ai_why }); });
+      anRender();
     }
     msg.textContent = '⏳ สังเคราะห์ภาพรวมทั้งหมด (ใช้เวลาสักครู่)...';
     const s = await anCall({ mode: 'synthesize' });
     AN.syn = { result: s.result, n_cases: s.n_cases, model: 'claude-opus-5-5' }; anRender();
-    document.getElementById('an-aimsg').textContent = '✅ เสร็จแล้ว — ตรวจร่างในตารางและกดบันทึกเพื่ออนุมัติ';
-  } catch (e) { anRender(); const m2 = document.getElementById('an-aimsg'); if (m2) m2.innerHTML = `<span style="color:var(--red)">❌ ${acEsc(e.message)} (ชุดที่เสร็จแล้วถูกบันทึกไว้ กดใหม่เพื่อทำต่อ)</span>`; }
+    document.getElementById('an-aimsg').textContent = '✅ เสร็จแล้ว — ตรวจร่างทีละเคสในปุ่ม "รายละเอียด" แล้วกดอนุมัติ';
+  } catch (e) { anRender(); const m2 = document.getElementById('an-aimsg'); if (m2) m2.innerHTML = `<span style="color:var(--red)">❌ ${acEsc(e.message)} (เคสที่เสร็จแล้วถูกบันทึกไว้ กดใหม่เพื่อทำต่อ)</span>`; }
   btn.disabled = false;
 }
 
