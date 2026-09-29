@@ -2106,7 +2106,7 @@ async function anAiBatch() {
     const res = await fetch(`${SB_URL}/functions/v1/accident-ai`, { method: 'POST', headers: sbHeaders, body: JSON.stringify({ emp_code: AN.code, password: AN.pw, mode: 'synthesize' }) });
     const j = await res.json().catch(() => ({}));
     if (!res.ok || !j.ok) throw new Error(j.error || `เซิร์ฟเวอร์ตอบ ${res.status}`);
-    AN.syn = { result: j.result, n_cases: j.n_cases, model: 'claude-opus-5-5' }; anRender();
+    AN.syn = { result: j.result, n_cases: j.n_cases, model: j.model }; anRender();
     document.getElementById('an-aimsg').textContent = '✅ เสร็จแล้ว';
   } catch (e) { msg.innerHTML = `<span style="color:var(--red)">❌ ${acEsc(e.message)}</span>`; }
   btn.disabled = false;
