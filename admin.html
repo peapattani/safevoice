@@ -905,6 +905,7 @@ function go(tab, keepFilter){
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById(`p-${tab}`)?.classList.add('active');
+  if (tab === 'analyze' && typeof anGrowAll === 'function') requestAnimationFrame(anGrowAll);
   document.getElementById(`t-${tab}`)?.classList.add('active');
   // update bottom nav
   document.querySelectorAll('.bn-btn').forEach(b=>b.classList.remove('active'));
@@ -2164,6 +2165,15 @@ function anEvDI(i, di) {
     <b style="color:var(--amber)">DI ${di}</b> · ${acEsc(r.accident_type_raw || r.accident_type || '—')} · ${acEsc(r.job_type || '—')} · ${acEsc(r.severity || '—')} · ตาย ${r.deaths} · บาดเจ็บ ${r.injured} · สูญเสียอวัยวะ ${r.limb_loss}
     <div style="white-space:pre-wrap;margin-top:6px;color:var(--ice);">${acEsc(r.description || '—')}</div></div>`;
 }
+// ช่องแก้ที่มี class ed-auto: ปรับความสูงให้พอดีข้อความ (ข้ามถ้าแท็บถูกซ่อนอยู่ เพราะวัดความสูงไม่ได้)
+function anGrow(el) { if (!el || el.offsetParent === null) return; el.style.height = 'auto'; el.style.height = (el.scrollHeight + 2) + 'px'; }
+function anGrowAll() { document.querySelectorAll('#an-syn-wrap textarea.ed-auto').forEach(anGrow); }
+(function () {
+  let t = null; const later = () => { cancelAnimationFrame(t); t = requestAnimationFrame(anGrowAll); };
+  window.addEventListener('DOMContentLoaded', () => { const b = document.getElementById('an-body'); if (b) new MutationObserver(later).observe(b, { childList: true, subtree: true }); });
+  window.addEventListener('resize', later);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(later);
+})();
 function anSynRefresh() { const el = document.getElementById('an-syn-wrap'); if (el) el.innerHTML = anSynInner(); }
 function anSynHtml() { return `<div id="an-syn-wrap">${anSynInner()}</div>`; }
 
@@ -2229,7 +2239,7 @@ function anSynInner() {
 
   const patEd = (E.patterns || []).map((p, i) => {
     const q = anNormPat(p), legacy = !q.title && q.text !== undefined;
-    const fld = (k, lab, rows, max) => `<div class="fg"><label class="fl">${lab}</label><textarea class="fi" id="ed-p${i}-${k}" rows="${rows}"${max ? ` maxlength="${max}"` : ''} style="resize:vertical;line-height:1.5;">${acEsc(q[k] || '')}</textarea></div>`;
+    const fld = (k, lab, rows, max) => `<div class="fg"><label class="fl">${lab}</label><textarea class="fi ed-auto" id="ed-p${i}-${k}" rows="1"${max ? ` maxlength="${max}"` : ''} oninput="anGrow(this)" style="resize:vertical;line-height:1.5;overflow:hidden;">${acEsc(q[k] || '')}</textarea></div>`;
     return `<div style="background:var(--navy);border-radius:10px;padding:12px 14px;margin-bottom:10px;">
       <div style="display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:6px;">
         <b style="color:var(--amber);font-size:12px;">รูปแบบ ${i + 1}${legacy ? ' · ฉบับเดิม' : ''}</b>
@@ -2242,6 +2252,8 @@ function anSynInner() {
     <div style="font-size:12px;line-height:1.6;margin-bottom:12px;">${status}${warn}${src}</div>
     <div class="section-label" style="margin-top:4px;">รูปแบบที่เกิดซ้ำ</div>
     ${patEd}
+    <div style="border-top:1px solid rgba(90,138,170,.45);margin:24px 0 18px;"></div>
+    <div class="section-label">จุดเสี่ยงที่ต้องระวังเป็นพิเศษ</div>
     ${hz}
     <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:6px;">
       <button class="btn-prim" id="an-pub" onclick="anPublish()">📢 เผยแพร่ให้พนักงาน</button>
