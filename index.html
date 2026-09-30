@@ -600,6 +600,9 @@ body {
 .hz-controls li { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; margin-bottom: 10px; }
 .hz-controls li:last-child { margin-bottom: 0; }
 .hz-act { font-size: 13px; line-height: 1.55; }
+.lp-title { font-size: 14px; font-weight: 700; line-height: 1.5; margin-bottom: 4px; }
+.lp-line { font-size: 13px; line-height: 1.65; margin-top: 2px; }
+.lp-lab { color: var(--muted); }
 </style>
 </head>
 <body>
@@ -2627,10 +2630,11 @@ function renderLearn(d) {
       </div>
       ${jobs.length ? `<div class="hz-jobs">งานที่พบบ่อย: ${jobs.map(j => `${learnEsc(j.name)} (${num(j.count)})`).join(' · ')}</div>` : ''}`;
   };
+  const lvLabel = l => l === 'PPE' ? 'อุปกรณ์ความปลอดภัย (PPE)' : l; // เปลี่ยนเฉพาะข้อความที่แสดง
   const hzControls = h => (h.control_levels || []).length
     ? `<div class="hz-ctl-label">มาตรการควบคุม <small>(เรียงจากผลดีที่สุด)</small></div>
-       <ul class="hz-controls">${h.control_levels.map(c => `<li><span class="hazard-control">${learnEsc(c.level)}</span><span class="hz-act">${learnEsc(c.action)}</span></li>`).join('')}</ul>`
-    : (h.controls ? `<span class="hazard-control">มาตรการควบคุม: ${learnEsc(h.controls)}</span>` : '');
+       <ul class="hz-controls">${h.control_levels.map(c => `<li><span class="hazard-control">${learnEsc(lvLabel(c.level))}</span><span class="hz-act">${learnEsc(c.action)}</span></li>`).join('')}</ul>`
+    : (h.controls ? `<span class="hazard-control">มาตรการควบคุม: ${learnEsc(lvLabel(h.controls))}</span>` : '');
 
   const hazards = (d.hazards || []).map(h => `
     <div class="hazard-card fade-up">
@@ -2685,10 +2689,17 @@ function renderLearn(d) {
     </div>`;
   const summary = dash;
 
+  // รูปแบบที่เกิดซ้ำ: ของใหม่เป็นโครงสร้าง {title, where, basis, assumption}; ของเดิมเป็นข้อความยาว (string)
+  const patHtml = p => {
+    if (typeof p === 'string') return `<li>${learnEsc(p)}</li>`;
+    if (!p || !p.title) return p && p.text ? `<li>${learnEsc(p.text)}</li>` : '';
+    const line = (lab, v) => v ? `<div class="lp-line"><span class="lp-lab">${lab}</span> ${learnEsc(v)}</div>` : '';
+    return `<li><div class="lp-title">${learnEsc(p.title)}</div>${line('เกิดซ้ำที่:', p.where)}${line('ที่มา:', p.basis)}${line('ข้อสันนิษฐาน:', p.assumption)}</li>`;
+  };
   const patterns = (d.patterns || []).length ? `
     <div class="card fade-up">
       <div class="section-label">รูปแบบที่เกิดซ้ำ</div>
-      <ul class="learn-patterns">${d.patterns.map(p => `<li>${learnEsc(p)}</li>`).join('')}</ul>
+      <ul class="learn-patterns">${d.patterns.map(patHtml).join('')}</ul>
     </div>` : '';
 
   const sortedByCode = (d.hazards || []).length && d.hazards.every(x => x.stats);
