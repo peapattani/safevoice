@@ -1898,7 +1898,7 @@ async function stTestClaude() {
 // ══ ACCIDENT IMPORT (นำเข้าไฟล์ Excel อุบัติเหตุจาก กฟภ.ส่วนกลาง) ══
 const AC = { rows: [] };
 const AC_FLAG = {
-  no_cause: 'ไม่มีสาเหตุในไฟล์', year_mismatch: 'ปีในเนื้อความไม่ตรงวันที่', zone_unknown: 'ไม่พบเขต',
+  year_mismatch: 'ปีในเนื้อความไม่ตรงวันที่', zone_unknown: 'ไม่พบเขต',
   free_text_job: 'ประเภทงานเป็นข้อความอิสระ', no_severity: 'ไม่มีระดับความรุนแรง'
 };
 const acClean = s => String(s == null ? '' : s).replace(/[\u00a0\s]+/g, ' ').trim();
@@ -1930,7 +1930,6 @@ function acParse(o) {
 
   const fm = acClean(o.feat).match(/ลักษณะ (.*?) สิ่งที่ทำ/);
   const causes = acClean(o.cause).split(',').map(x => x.trim()).filter(x => x && x !== '-');
-  if (!causes.length) flags.push('no_cause');
 
   let desc = acClean(o.desc);
   const ys = [...desc.matchAll(/(?<!\d)(25[6-9]\d)(?!\d)/g)].map(x => +x[1]);
@@ -2024,7 +2023,6 @@ async function acSave() {
 
 // ══ ACCIDENT ANALYSIS (วิเคราะห์อุบัติเหตุ) ══
 const AN = { code: '', pw: '', rows: [], syn: null };
-const anCauses = r => r.causes || [];
 
 function anTally(rows, f) { const m = {}; rows.forEach(r => [].concat(f(r)).forEach(k => { if (k) m[k] = (m[k] || 0) + 1; })); return Object.entries(m).sort((a, b) => b[1] - a[1]); }
 function anBars(list, max, col) { return list.map(([k, n]) => `<div style="display:flex;align-items:center;gap:8px;margin:5px 0;font-size:12px;"><span style="width:150px;flex-shrink:0;">${acEsc(k)}</span><div style="flex:1;background:var(--navy);border-radius:5px;height:14px;"><div style="width:${n / max * 100}%;background:${col};height:100%;border-radius:5px;"></div></div><b style="width:26px;text-align:right;">${n}</b></div>`).join(''); }
@@ -2043,9 +2041,9 @@ async function anLoad() {
 
 function anRender() {
   const R = AN.rows, N = R.length; if (!N) { document.getElementById('an-body').innerHTML = '<div class="card">ยังไม่มีข้อมูล — นำเข้าไฟล์ก่อน</div>'; return; }
-  const sum = k => R.reduce((a, r) => a + r[k], 0), todo = R.filter(r => !anCauses(r).length).length;
+  const sum = k => R.reduce((a, r) => a + r[k], 0);
   const zone = anTally(R, r => r.zone), types = anTally(R, r => r.accident_type), jobs = anTally(R, r => r.job_type).slice(0, 6);
-  const cause = anTally(R, anCauses).slice(0, 8), sev = anTally(R, r => r.severity || 'ไม่ระบุ');
+  const sev = anTally(R, r => r.severity || 'ไม่ระบุ');
   const card = (n, l, c) => `<div class="stat-card"><div class="stat-num" style="color:${c}">${n}</div><div class="stat-lbl">${l}</div></div>`;
   const risk = types.map(([t, n]) => {
     const rs = R.filter(r => r.accident_type === t), d = rs.reduce((a, r) => a + r.deaths, 0), l = rs.reduce((a, r) => a + r.limb_loss, 0);
@@ -2055,13 +2053,12 @@ function anRender() {
   }).join('');
   const tt = types.slice(0, 5).map(x => x[0]);
   const mx = jobs.map(([j]) => `<tr><td>${acEsc(j)}</td>${tt.map(t => { const n = R.filter(r => r.job_type === j && r.accident_type === t).length; return `<td style="text-align:center;${n ? 'color:var(--green);font-weight:700;' : 'color:var(--muted);'}">${n || '·'}</td>`; }).join('')}</tr>`).join('');
-  const ev = R.map(r => { const has = anCauses(r).length > 0; return `<tr><td>${r.di_no}</td><td>${r.occurred_date || '—'}</td><td>${acEsc(r.zone || '—')}</td><td>${acEsc(r.accident_type_raw || r.accident_type || '—')}</td><td>${acEsc(r.severity || '—')}</td><td style="color:${has ? 'var(--green)' : 'var(--amber)'}">${has ? 'ระบุสาเหตุแล้ว' : 'ไม่ระบุสาเหตุ'}</td><td><button class="btn-sm" onclick="anDetail(${r.di_no})">รายละเอียด</button></td></tr>`; }).join('');
+  const ev = R.map(r => { return `<tr><td>${r.di_no}</td><td>${r.occurred_date || '—'}</td><td>${acEsc(r.zone || '—')}</td><td>${acEsc(r.accident_type_raw || r.accident_type || '—')}</td><td>${acEsc(r.severity || '—')}</td><td><button class="btn-sm" onclick="anDetail(${r.di_no})">รายละเอียด</button></td></tr>`; }).join('');
   document.getElementById('an-body').innerHTML = `
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:14px;">
-      ${card(N, 'เหตุการณ์', 'var(--green)')}${card(sum('deaths'), 'เสียชีวิต (คน)', 'var(--red)')}${card(sum('injured'), 'บาดเจ็บ (คน)', 'var(--amber)')}${card(todo, 'ไม่ระบุสาเหตุ', 'var(--amber)')}</div>
+      ${card(N, 'เหตุการณ์', 'var(--green)')}${card(sum('deaths'), 'เสียชีวิต (คน)', 'var(--red)')}${card(sum('injured'), 'บาดเจ็บ (คน)', 'var(--amber)')}${card(sum('limb_loss'), 'สูญเสียอวัยวะ (คน)', 'var(--ice)')}</div>
     <div class="card"><div class="section-label">แยกตามโซน</div>${anBars(zone, zone[0][1], 'var(--green)')}</div>
     <div class="card"><div class="section-label">ระดับความรุนแรง (สูงสุดของเหตุการณ์)</div>${anBars(sev, sev[0][1], 'var(--red)')}</div>
-    <div class="card"><div class="section-label">สาเหตุที่พบบ่อย (จากระบบส่วนกลาง)</div>${cause.length ? anBars(cause, cause[0][1], 'var(--amber)') : '<span style="color:var(--muted)">ยังไม่มีข้อมูลสาเหตุ</span>'}</div>
     <div class="card"><div class="section-label">โอกาสเกิด × ความรุนแรง ตามลักษณะเหตุ</div>
       <div style="overflow:auto;"><table class="tbl"><thead><tr><th>ลักษณะเหตุ</th><th>เหตุ</th><th>ตาย</th><th>โอกาส</th><th>ระดับความเสี่ยง</th></tr></thead><tbody>${risk}</tbody></table></div>
       <div style="font-size:11px;color:var(--muted);margin-top:8px;">ข้อมูล ${N} เหตุ ใช้เป็นระดับประกอบดุลยพินิจ ไม่ใช่ความน่าจะเป็น</div></div>
@@ -2071,17 +2068,15 @@ function anRender() {
     <div class="card"><div class="section-label">🤖 AI ผู้เชี่ยวชาญด้านความปลอดภัย</div><div style="font-size:12px;color:var(--muted);margin-bottom:10px;">ให้ AI อ่านทุกเคสพร้อมกัน หารูปแบบซ้ำ จุดเสี่ยงสำคัญ บทเรียนสำหรับพนักงาน และตรวจเคสที่ช่องข้อมูลไม่ตรงกับเนื้อความ ผลที่ได้เป็น <b>ฉบับร่าง</b> — ต้องตรวจ/แก้แล้วกด "เผยแพร่" ก่อนพนักงานจึงจะเห็นฉบับใหม่</div><button class="btn-prim" id="an-ai" onclick="anAiBatch()">🤖 สรุปภาพรวมด้วย AI</button> <span id="an-aimsg" style="font-size:12px;margin-left:8px;"></span></div>
     <div id="an-edit"></div>
     <div class="card"><div class="section-label">รายการเหตุการณ์ — กด "รายละเอียด" เพื่ออ่านเหตุการณ์</div>
-      <div style="overflow:auto;max-height:460px;"><table class="tbl"><thead><tr><th>DI</th><th>วันที่</th><th>โซน</th><th>ลักษณะ</th><th>รุนแรง</th><th>สาเหตุ</th><th></th></tr></thead><tbody>${ev}</tbody></table></div></div>`;
+      <div style="overflow:auto;max-height:460px;"><table class="tbl"><thead><tr><th>DI</th><th>วันที่</th><th>โซน</th><th>ลักษณะ</th><th>รุนแรง</th><th></th></tr></thead><tbody>${ev}</tbody></table></div></div>`;
 }
 
 function anDetail(di) {
   const r = AN.rows.find(x => x.di_no === di), box = document.getElementById('an-edit');
-  const central = (r.causes && r.causes.length) ? r.causes : null;
   box.innerHTML = `<div class="card" style="border-color:var(--green);">
     <div class="section-label">DI ${di} — ${acEsc(r.accident_type_raw || r.accident_type || '')} · ${acEsc(r.job_type || '')} · ${acEsc(r.zone || '—')} · ${acEsc(r.occurred_date || '—')}</div>
     <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">ระดับความรุนแรง: ${acEsc(r.severity || '—')} · ตาย ${r.deaths} · บาดเจ็บ ${r.injured} · สูญเสียอวัยวะ ${r.limb_loss}</div>
     <div style="font-size:13px;line-height:1.7;margin-bottom:8px;color:var(--ice);white-space:pre-wrap;">${acEsc(r.description || '—')}</div>
-    <div style="font-size:12px;"><b>สาเหตุจากระบบส่วนกลาง:</b> ${central ? central.map(acEsc).join(' · ') : '<span style="color:var(--muted)">ไม่ระบุ</span>'}</div>
     <button class="btn-sm" style="margin-top:12px;" onclick="document.getElementById('an-edit').innerHTML=''">ปิด</button></div>`;
   box.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
@@ -2161,7 +2156,6 @@ function anSynInner() {
         : `<div style="${muted}">AI ไม่พบความขัดแย้งระหว่างช่องข้อมูลกับเนื้อความ (ไม่ได้รับประกันว่าไม่มี)</div>`)
     : `<div style="${muted}">ฉบับร่างนี้สร้างด้วยรูปแบบเดิม ไม่มีรายการตรวจข้อมูลรายเคส — กดสรุปด้วย AI ใหม่เพื่อให้มี</div>${(o.gaps || []).length ? `<ul style="font-size:12px;line-height:1.7;margin:0 0 10px 18px;">${L(o.gaps)}</ul>` : ''}`;
   const head = `<div class="card" style="border-color:var(--amber);"><div class="section-label">🤖 ผลตรวจจาก AI (${s.n_cases} เคส · ${acEsc(s.model || '')})</div>
-    ${o.coverage ? `<div style="font-size:12px;margin-bottom:10px;">${acEsc(o.coverage)} <span style="color:var(--muted)">(โค้ดนับ)</span></div>` : ''}
     <b style="font-size:12px;">เคสที่ควรตรวจข้อมูลซ้ำ <span style="font-weight:400;color:var(--muted);">(ช่องข้อมูลอาจไม่ตรงกับเนื้อความ — กดเลข DI เพื่ออ่านเหตุการณ์)</span></b>
     ${chkHtml}
     ${evHtml}
