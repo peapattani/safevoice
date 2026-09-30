@@ -2068,7 +2068,7 @@ function anRender() {
     <div class="card"><div class="section-label">ความเชื่อมโยง ประเภทงาน × ลักษณะเหตุ</div>
       <div style="overflow:auto;"><table class="tbl"><thead><tr><th>ประเภทงาน</th>${tt.map(t => `<th>${acEsc(t)}</th>`).join('')}</tr></thead><tbody>${mx}</tbody></table></div></div>
     ${anSynHtml()}
-    <div class="card"><div class="section-label">🤖 AI ผู้เชี่ยวชาญด้านความปลอดภัย</div><div style="font-size:12px;color:var(--muted);margin-bottom:10px;">ให้ AI อ่านทุกเคสพร้อมกัน สรุปรูปแบบซ้ำ จุดเสี่ยงสำคัญ และบทเรียนสำหรับพนักงาน ผลที่ได้เป็น <b>ฉบับร่าง</b> — ต้องตรวจ/แก้แล้วกด "เผยแพร่" ก่อนพนักงานจึงจะเห็นฉบับใหม่</div><button class="btn-prim" id="an-ai" onclick="anAiBatch()">🤖 สรุปภาพรวมด้วย AI</button> <span id="an-aimsg" style="font-size:12px;margin-left:8px;"></span></div>
+    <div class="card"><div class="section-label">🤖 AI ผู้เชี่ยวชาญด้านความปลอดภัย</div><div style="font-size:12px;color:var(--muted);margin-bottom:10px;">ให้ AI อ่านทุกเคสพร้อมกัน หารูปแบบซ้ำ จุดเสี่ยงสำคัญ บทเรียนสำหรับพนักงาน และตรวจเคสที่ช่องข้อมูลไม่ตรงกับเนื้อความ ผลที่ได้เป็น <b>ฉบับร่าง</b> — ต้องตรวจ/แก้แล้วกด "เผยแพร่" ก่อนพนักงานจึงจะเห็นฉบับใหม่</div><button class="btn-prim" id="an-ai" onclick="anAiBatch()">🤖 สรุปภาพรวมด้วย AI</button> <span id="an-aimsg" style="font-size:12px;margin-left:8px;"></span></div>
     <div id="an-edit"></div>
     <div class="card"><div class="section-label">รายการเหตุการณ์ — กด "รายละเอียด" เพื่ออ่านเหตุการณ์</div>
       <div style="overflow:auto;max-height:460px;"><table class="tbl"><thead><tr><th>DI</th><th>วันที่</th><th>โซน</th><th>ลักษณะ</th><th>รุนแรง</th><th>สาเหตุ</th><th></th></tr></thead><tbody>${ev}</tbody></table></div></div>`;
@@ -2138,6 +2138,10 @@ function anEdCtl(i, j, op) {
   if (op === 'del') h.control_levels.splice(j, 1);
   anSynRefresh();
 }
+function anOpenDI(di) {
+  if (AN.rows.some(r => r.di_no === di)) anDetail(di);
+  else showToast('ไม่พบ DI นี้ในข้อมูลที่โหลด', 'amber');
+}
 function anSynRefresh() { const el = document.getElementById('an-syn-wrap'); if (el) el.innerHTML = anSynInner(); }
 function anSynHtml() { return `<div id="an-syn-wrap">${anSynInner()}</div>`; }
 
@@ -2149,11 +2153,19 @@ function anSynInner() {
     ? `<b style="font-size:12px;">หลักฐานของรูปแบบที่ AI เสนอ <span style="font-weight:400;color:var(--muted);">(ตรวจได้จากรายการเหตุการณ์ด้านล่าง — ระบบตรวจแล้วว่าเลข DI มีอยู่จริง แต่ไม่ได้ตรวจว่าเนื้อหาเคสสนับสนุนรูปแบบนั้นจริง)</span></b>
        <ul style="font-size:12px;line-height:1.7;margin:4px 0 8px 18px;">${(o.patterns || []).map((p, i) => { const e = evs[i] || {}, di = e.di || [], n = di.length;
          return `<li>${acEsc(String(p).slice(0, 70))}… — ${n >= 3 ? `พบใน <b>${n}</b> เคส` : `<span style="color:var(--amber)">⚠ หลักฐานเพียง ${n} เคส</span>`} <span style="color:var(--muted)">${n ? '(DI ' + di.join(', ') + ')' : ''}</span></li>`; }).join('')}</ul>` : '';
-  const head = `<div class="card" style="border-color:var(--amber);"><div class="section-label">🤖 สังเคราะห์ภาพรวมโดย AI (${s.n_cases} เคส · ${acEsc(s.model || '')})</div>
-    <div style="font-size:13px;line-height:1.7;margin-bottom:10px;">${acEsc(o.summary || '')}</div>
-    <b style="font-size:12px;">ข้อจำกัด/ควรตรวจซ้ำ</b><ul style="font-size:12px;line-height:1.7;margin:4px 0 6px 18px;">${L(o.gaps)}</ul>
+  const chk = Array.isArray(o.data_checks) ? o.data_checks : null;
+  const muted = 'font-size:12px;color:var(--muted);margin:6px 0 10px;';
+  const chkHtml = chk
+    ? (chk.length
+        ? `<ul style="list-style:none;margin:6px 0 10px;padding:0;">${chk.map(c => `<li style="font-size:12px;line-height:1.6;margin-bottom:8px;display:flex;gap:8px;align-items:flex-start;"><button class="btn-sm" onclick="anOpenDI(${Number(c.di)})">DI ${Number(c.di)}</button><span><span style="color:var(--amber)">${acEsc(c.kind)}</span> — ${acEsc(c.note)}</span></li>`).join('')}</ul>`
+        : `<div style="${muted}">AI ไม่พบความขัดแย้งระหว่างช่องข้อมูลกับเนื้อความ (ไม่ได้รับประกันว่าไม่มี)</div>`)
+    : `<div style="${muted}">ฉบับร่างนี้สร้างด้วยรูปแบบเดิม ไม่มีรายการตรวจข้อมูลรายเคส — กดสรุปด้วย AI ใหม่เพื่อให้มี</div>${(o.gaps || []).length ? `<ul style="font-size:12px;line-height:1.7;margin:0 0 10px 18px;">${L(o.gaps)}</ul>` : ''}`;
+  const head = `<div class="card" style="border-color:var(--amber);"><div class="section-label">🤖 ผลตรวจจาก AI (${s.n_cases} เคส · ${acEsc(s.model || '')})</div>
+    ${o.coverage ? `<div style="font-size:12px;margin-bottom:10px;">${acEsc(o.coverage)} <span style="color:var(--muted)">(โค้ดนับ)</span></div>` : ''}
+    <b style="font-size:12px;">เคสที่ควรตรวจข้อมูลซ้ำ <span style="font-weight:400;color:var(--muted);">(ช่องข้อมูลอาจไม่ตรงกับเนื้อความ — กดเลข DI เพื่ออ่านเหตุการณ์)</span></b>
+    ${chkHtml}
     ${evHtml}
-    <div style="font-size:11px;color:var(--muted);">ส่วนสรุป ข้อจำกัด และหลักฐานนี้เห็นเฉพาะเจ้าหน้าที่ ไม่แสดงให้พนักงาน</div></div>`;
+    <div style="font-size:11px;color:var(--muted);">ส่วนนี้เห็นเฉพาะเจ้าหน้าที่ ไม่แสดงให้พนักงาน</div></div>`;
 
   if (s._legacy) { // ยังไม่ได้รัน SQL เผยแพร่ → แสดงผลอย่างเดียว
     return head + `<div class="card" style="border-color:var(--green);"><div class="section-label">เนื้อหาบทเรียน (แสดงผลอย่างเดียว)</div>
@@ -2233,11 +2245,23 @@ async function anPublish() {
 
 async function anAiBatch() {
   const btn = document.getElementById('an-ai'), msg = document.getElementById('an-aimsg');
-  btn.disabled = true; msg.textContent = '⏳ กำลังให้ AI สังเคราะห์ภาพรวม (ใช้เวลาสักครู่ อย่าปิดหน้านี้)...';
-  try {
-    const res = await fetch(`${SB_URL}/functions/v1/accident-ai`, { method: 'POST', headers: sbHeaders, body: JSON.stringify({ emp_code: AN.code, password: AN.pw, mode: 'synthesize' }) });
+  btn.disabled = true; msg.textContent = '⏳ กำลังให้ AI วิเคราะห์ (ใช้เวลาสักครู่ อย่าปิดหน้านี้)...';
+  const call = async force => {
+    const res = await fetch(`${SB_URL}/functions/v1/accident-ai`, { method: 'POST', headers: sbHeaders, body: JSON.stringify({ emp_code: AN.code, password: AN.pw, mode: 'synthesize', force: !!force }) });
     const j = await res.json().catch(() => ({}));
-    if (!res.ok || !j.ok) throw new Error(j.error || `เซิร์ฟเวอร์ตอบ ${res.status}`);
+    if (!res.ok || (!j.ok && !j.unchanged)) throw new Error(j.error || `เซิร์ฟเวอร์ตอบ ${res.status}`);
+    return j;
+  };
+  try {
+    let j = await call(false);
+    if (j.unchanged) { // ข้อมูลและคำสั่งเหมือนครั้งก่อน — ยังไม่เรียก AI จนกว่าจะยืนยัน
+      const when = j.created_at ? new Date(j.created_at).toLocaleString('th-TH', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+      if (!confirm(`ข้อมูลอุบัติเหตุและคำสั่ง AI ไม่เปลี่ยนตั้งแต่สังเคราะห์ครั้งล่าสุด (${when})\nสังเคราะห์ซ้ำจะได้ผลใกล้เคียงเดิมและเสียค่า token\n\nต้องการสังเคราะห์ใหม่อีกครั้งหรือไม่?`)) {
+        msg.textContent = 'ยกเลิก — ใช้ฉบับร่างเดิม'; btn.disabled = false; return;
+      }
+      msg.textContent = '⏳ กำลังให้ AI วิเคราะห์ (ใช้เวลาสักครู่ อย่าปิดหน้านี้)...';
+      j = await call(true);
+    }
     AN.syn = { ...(AN.syn || {}), result: j.result, n_cases: j.n_cases, model: j.model, created_at: new Date().toISOString() }; AN.edit = null; anRender();
     await anLoadSyn(); // โหลดสถานะการเผยแพร่จริงจากเซิร์ฟเวอร์
     document.getElementById('an-aimsg').textContent = '✅ เสร็จแล้ว — ตรวจ/แก้ในส่วน "เนื้อหาบทเรียนสำหรับพนักงาน" แล้วกดเผยแพร่';
