@@ -587,6 +587,19 @@ body {
 .ld-cause.first .ld-bar > i { opacity:1; }
 .learn-h { font-size: 16px; font-weight: 700; margin: 22px 2px 12px; }
 .ld-cause.job .ld-bar > i { background: var(--amber); opacity: .6; }
+.learn-h + .learn-cap { font-size: 12px; color: var(--muted); margin: -8px 2px 12px; }
+.hz-stats { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 12px; color: var(--muted); margin: 4px 0 8px; }
+.hz-stats b { font-size: 16px; font-weight: 800; color: var(--white); margin-right: 4px; }
+.hz-stats b.d { color: var(--red); }
+.hz-stats b.h { color: var(--amber); }
+.hz-stats b.o { color: var(--ice); }
+.hz-jobs { font-size: 12px; color: var(--muted); line-height: 1.55; margin: 0 0 12px; }
+.hz-ctl-label { font-size: 12px; font-weight: 700; color: var(--muted); margin: 2px 0 8px; }
+.hz-ctl-label small { font-weight: 400; }
+.hz-controls { list-style: none; padding: 0; margin: 0; }
+.hz-controls li { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; margin-bottom: 10px; }
+.hz-controls li:last-child { margin-bottom: 0; }
+.hz-act { font-size: 13px; line-height: 1.55; }
 </style>
 </head>
 <body>
@@ -2602,18 +2615,35 @@ function renderLearn(d) {
   }
   meta.textContent = parts.join(' • ');
 
+  const num = v => (v === undefined || v === null) ? '–' : Number(v).toLocaleString('th-TH');
+  const hzStats = h => {
+    const s = h.stats; if (!s) return '';
+    const jobs = (s.top_jobs || []).filter(j => j && j.name);
+    return `<div class="hz-stats">
+        <span><b class="d">${num(s.deaths)}</b>เสียชีวิต</span>
+        <span><b class="h">${num(s.injured)}</b>บาดเจ็บ</span>
+        ${Number(s.limb_loss) > 0 ? `<span><b class="o">${num(s.limb_loss)}</b>เสียอวัยวะ</span>` : ''}
+        <span><b>${num(s.cases)}</b>เคส</span>
+      </div>
+      ${jobs.length ? `<div class="hz-jobs">งานที่พบบ่อย: ${jobs.map(j => `${learnEsc(j.name)} (${num(j.count)})`).join(' · ')}</div>` : ''}`;
+  };
+  const hzControls = h => (h.control_levels || []).length
+    ? `<div class="hz-ctl-label">มาตรการควบคุม <small>(เรียงจากผลดีที่สุด)</small></div>
+       <ul class="hz-controls">${h.control_levels.map(c => `<li><span class="hazard-control">${learnEsc(c.level)}</span><span class="hz-act">${learnEsc(c.action)}</span></li>`).join('')}</ul>`
+    : (h.controls ? `<span class="hazard-control">มาตรการควบคุม: ${learnEsc(h.controls)}</span>` : '');
+
   const hazards = (d.hazards || []).map(h => `
     <div class="hazard-card fade-up">
       <div class="hazard-title">${learnEsc(h.title)}</div>
+      ${hzStats(h)}
       ${h.why ? `<div class="hazard-why">${learnEsc(h.why)}</div>` : ''}
       ${(h.lessons || []).length ? `
         <div class="hazard-do-label">สิ่งที่ต้องทำ</div>
         <ul class="hazard-lessons">${h.lessons.map(l => `<li>${learnEsc(l)}</li>`).join('')}</ul>` : ''}
-      ${h.controls ? `<span class="hazard-control">มาตรการควบคุม: ${learnEsc(h.controls)}</span>` : ''}
+      ${hzControls(h)}
     </div>`).join('');
 
   const st = d.stats || {};
-  const num = v => (v === undefined || v === null) ? '–' : Number(v).toLocaleString('th-TH');
   const causes = (st.top_causes || []).slice(0, 3);
   const maxC = Math.max(1, ...causes.map(c => Number(c.count) || 0));
   const jobs = (st.top_jobs || (st.top_job ? [st.top_job] : [])).filter(j => j && j.name);
@@ -2661,7 +2691,11 @@ function renderLearn(d) {
       <ul class="learn-patterns">${d.patterns.map(p => `<li>${learnEsc(p)}</li>`).join('')}</ul>
     </div>` : '';
 
-  const hazardsHead = hazards ? '<div class="learn-h">จุดเสี่ยงที่ต้องระวังเป็นพิเศษ</div>' : '';
+  const sortedByCode = (d.hazards || []).length && d.hazards.every(x => x.stats);
+  const hazardsHead = hazards
+    ? '<div class="learn-h">จุดเสี่ยงที่ต้องระวังเป็นพิเศษ</div>' +
+      (sortedByCode ? '<div class="learn-cap">เรียงตามจำนวนผู้เสียชีวิต แล้วตามด้วยผู้บาดเจ็บ</div>' : '')
+    : '';
   document.getElementById('l-content').innerHTML = summary + hazardsHead + hazards + patterns;
   animNum('ld-cases', 0, Number(d.n_cases) || 0, 700);
   if (st.deaths     != null) animNum('ld-dead',  0, Number(st.deaths),     700);
