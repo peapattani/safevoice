@@ -2036,7 +2036,8 @@ async function anLoad() {
     const res = await fetch(`${SB_URL}/rest/v1/rpc/accident_list`, { method: 'POST', headers: sbHeaders, body: JSON.stringify({ p_emp_code: AN.code, p_password: AN.pw }) });
     const j = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(j.message === 'unauthorized' ? 'รหัสหรือรหัสผ่านไม่ถูกต้อง หรือไม่มีสิทธิ์' : (j.message || res.status));
-    AN.rows = j; out.textContent = ''; anRender(); anLoadSyn();
+    AN.rows = (Array.isArray(j) ? j : []).map(r => ({ ...r, accident_type_raw: r.accident_type, accident_type: anType(r.accident_type) }));
+    out.textContent = ''; anRender(); anLoadSyn();
   } catch (e) { out.innerHTML = `<span style="color:var(--red)">❌ ${acEsc(e.message)}</span>`; }
 }
 
@@ -2054,7 +2055,7 @@ function anRender() {
   }).join('');
   const tt = types.slice(0, 5).map(x => x[0]);
   const mx = jobs.map(([j]) => `<tr><td>${acEsc(j)}</td>${tt.map(t => { const n = R.filter(r => r.job_type === j && r.accident_type === t).length; return `<td style="text-align:center;${n ? 'color:var(--green);font-weight:700;' : 'color:var(--muted);'}">${n || '·'}</td>`; }).join('')}</tr>`).join('');
-  const ev = R.map(r => { const has = anCauses(r).length > 0; return `<tr><td>${r.di_no}</td><td>${r.occurred_date || '—'}</td><td>${acEsc(r.zone || '—')}</td><td>${acEsc(r.accident_type || '—')}</td><td>${acEsc(r.severity || '—')}</td><td style="color:${has ? 'var(--green)' : 'var(--amber)'}">${has ? 'ระบุสาเหตุแล้ว' : 'ไม่ระบุสาเหตุ'}</td><td><button class="btn-sm" onclick="anDetail(${r.di_no})">รายละเอียด</button></td></tr>`; }).join('');
+  const ev = R.map(r => { const has = anCauses(r).length > 0; return `<tr><td>${r.di_no}</td><td>${r.occurred_date || '—'}</td><td>${acEsc(r.zone || '—')}</td><td>${acEsc(r.accident_type_raw || r.accident_type || '—')}</td><td>${acEsc(r.severity || '—')}</td><td style="color:${has ? 'var(--green)' : 'var(--amber)'}">${has ? 'ระบุสาเหตุแล้ว' : 'ไม่ระบุสาเหตุ'}</td><td><button class="btn-sm" onclick="anDetail(${r.di_no})">รายละเอียด</button></td></tr>`; }).join('');
   document.getElementById('an-body').innerHTML = `
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:14px;">
       ${card(N, 'เหตุการณ์', 'var(--green)')}${card(sum('deaths'), 'เสียชีวิต (คน)', 'var(--red)')}${card(sum('injured'), 'บาดเจ็บ (คน)', 'var(--amber)')}${card(todo, 'ไม่ระบุสาเหตุ', 'var(--amber)')}</div>
@@ -2067,7 +2068,7 @@ function anRender() {
     <div class="card"><div class="section-label">ความเชื่อมโยง ประเภทงาน × ลักษณะเหตุ</div>
       <div style="overflow:auto;"><table class="tbl"><thead><tr><th>ประเภทงาน</th>${tt.map(t => `<th>${acEsc(t)}</th>`).join('')}</tr></thead><tbody>${mx}</tbody></table></div></div>
     ${anSynHtml()}
-    <div class="card"><div class="section-label">🤖 AI ผู้เชี่ยวชาญด้านความปลอดภัย</div><div style="font-size:12px;color:var(--muted);margin-bottom:10px;">ให้ AI อ่านทุกเคสพร้อมกัน สรุปรูปแบบซ้ำ จุดเสี่ยงสำคัญ และบทเรียนสำหรับพนักงาน</div><button class="btn-prim" id="an-ai" onclick="anAiBatch()">🤖 สรุปภาพรวมด้วย AI</button> <span id="an-aimsg" style="font-size:12px;margin-left:8px;"></span></div>
+    <div class="card"><div class="section-label">🤖 AI ผู้เชี่ยวชาญด้านความปลอดภัย</div><div style="font-size:12px;color:var(--muted);margin-bottom:10px;">ให้ AI อ่านทุกเคสพร้อมกัน สรุปรูปแบบซ้ำ จุดเสี่ยงสำคัญ และบทเรียนสำหรับพนักงาน ผลที่ได้เป็น <b>ฉบับร่าง</b> — ต้องตรวจ/แก้แล้วกด "เผยแพร่" ก่อนพนักงานจึงจะเห็นฉบับใหม่</div><button class="btn-prim" id="an-ai" onclick="anAiBatch()">🤖 สรุปภาพรวมด้วย AI</button> <span id="an-aimsg" style="font-size:12px;margin-left:8px;"></span></div>
     <div id="an-edit"></div>
     <div class="card"><div class="section-label">รายการเหตุการณ์ — กด "รายละเอียด" เพื่ออ่านเหตุการณ์</div>
       <div style="overflow:auto;max-height:460px;"><table class="tbl"><thead><tr><th>DI</th><th>วันที่</th><th>โซน</th><th>ลักษณะ</th><th>รุนแรง</th><th>สาเหตุ</th><th></th></tr></thead><tbody>${ev}</tbody></table></div></div>`;
@@ -2077,7 +2078,7 @@ function anDetail(di) {
   const r = AN.rows.find(x => x.di_no === di), box = document.getElementById('an-edit');
   const central = (r.causes && r.causes.length) ? r.causes : null;
   box.innerHTML = `<div class="card" style="border-color:var(--green);">
-    <div class="section-label">DI ${di} — ${acEsc(r.accident_type || '')} · ${acEsc(r.job_type || '')} · ${acEsc(r.zone || '—')} · ${acEsc(r.occurred_date || '—')}</div>
+    <div class="section-label">DI ${di} — ${acEsc(r.accident_type_raw || r.accident_type || '')} · ${acEsc(r.job_type || '')} · ${acEsc(r.zone || '—')} · ${acEsc(r.occurred_date || '—')}</div>
     <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">ระดับความรุนแรง: ${acEsc(r.severity || '—')} · ตาย ${r.deaths} · บาดเจ็บ ${r.injured} · สูญเสียอวัยวะ ${r.limb_loss}</div>
     <div style="font-size:13px;line-height:1.7;margin-bottom:8px;color:var(--ice);white-space:pre-wrap;">${acEsc(r.description || '—')}</div>
     <div style="font-size:12px;"><b>สาเหตุจากระบบส่วนกลาง:</b> ${central ? central.map(acEsc).join(' · ') : '<span style="color:var(--muted)">ไม่ระบุ</span>'}</div>
@@ -2085,18 +2086,143 @@ function anDetail(di) {
   box.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
+const AN_LEVELS = ['ขจัด (Elimination)', 'ทดแทน (Substitution)', 'วิศวกรรม (Engineering)', 'บริหารจัดการ (Administrative)', 'PPE'];
+// รวมกลุ่ม "การใช้ยานพาหนะ" ทุกแบบ ให้ตรงกับ dashboard ของพนักงานและ accident-ai
+const anType = t => (t && String(t).trim().startsWith('การใช้ยานพาหนะ')) ? 'การใช้ยานพาหนะ' : t;
+
 async function anLoadSyn() {
-  try { const res = await fetch(`${SB_URL}/rest/v1/rpc/accident_get_synthesis`, { method: 'POST', headers: sbHeaders, body: JSON.stringify({ p_emp_code: AN.code, p_password: AN.pw }) });
-    if (res.ok) { const j = await res.json(); if (j) { AN.syn = j; anRender(); } } } catch (e) {}
+  const body = JSON.stringify({ p_emp_code: AN.code, p_password: AN.pw });
+  try {
+    let res = await fetch(`${SB_URL}/rest/v1/rpc/accident_syn_full`, { method: 'POST', headers: sbHeaders, body });
+    let legacy = false;
+    if (!res.ok) { // ยังไม่ได้รัน SQL ขั้นเผยแพร่ → ใช้ฟังก์ชันเดิมไปก่อน (แสดงผลอย่างเดียว)
+      res = await fetch(`${SB_URL}/rest/v1/rpc/accident_get_synthesis`, { method: 'POST', headers: sbHeaders, body });
+      legacy = true;
+    }
+    if (res.ok) { const j = await res.json(); if (j) { if (legacy) j._legacy = true; AN.syn = j; AN.edit = null; anRender(); } }
+  } catch (e) {}
 }
-function anSynHtml() {
-  const o = AN.syn && AN.syn.result; if (!o) return '';
+
+// ── ฉบับร่างที่เจ้าหน้าที่กำลังแก้ (AN.edit) ──
+function anEditInit(which) {
+  const s = AN.syn; if (!s || !s.result) { AN.edit = null; return; }
+  const newer = !s.published_at || (s.created_at && new Date(s.created_at) > new Date(s.published_at));
+  const src = which === 'draft' ? s.result : which === 'published' ? (s.published || s.result) : ((s.published && !newer) ? s.published : s.result);
+  AN.edit = JSON.parse(JSON.stringify({ patterns: src.patterns || [], hazards: src.hazards || [] }));
+  AN.edit.from = (src === s.published) ? 'published' : 'draft';
+}
+function anEditFrom(which) {
+  if (!confirm('การแก้ไขที่ยังไม่ได้เผยแพร่จะหายไป ต้องการดำเนินการต่อหรือไม่?')) return;
+  anEditInit(which); anSynRefresh();
+}
+function anEditCollect() {
+  const E = AN.edit; if (!E) return;
+  const g = id => document.getElementById(id);
+  const lines = (v, n) => String(v || '').split('\n').map(x => x.trim()).filter(Boolean).slice(0, n);
+  if (g('ed-pat')) E.patterns = lines(g('ed-pat').value, 3);
+  E.hazards.forEach((h, i) => {
+    if (!g(`ed-h${i}-title`)) return;
+    h.title = g(`ed-h${i}-title`).value.trim();
+    h.why = g(`ed-h${i}-why`).value.trim();
+    h.lessons = lines(g(`ed-h${i}-les`).value, 3);
+    h.hide = g(`ed-h${i}-hide`).checked;
+    h.control_levels = (h.control_levels || []).map((c, j) => ({
+      level: g(`ed-h${i}-c${j}-lv`) ? g(`ed-h${i}-c${j}-lv`).value : c.level,
+      action: g(`ed-h${i}-c${j}-ac`) ? g(`ed-h${i}-c${j}-ac`).value : c.action }));
+  });
+}
+function anEdCtl(i, j, op) {
+  anEditCollect();
+  const h = AN.edit.hazards[i]; h.control_levels = h.control_levels || [];
+  if (op === 'add' && h.control_levels.length < 3) h.control_levels.push({ level: AN_LEVELS[2], action: '' });
+  if (op === 'del') h.control_levels.splice(j, 1);
+  anSynRefresh();
+}
+function anSynRefresh() { const el = document.getElementById('an-syn-wrap'); if (el) el.innerHTML = anSynInner(); }
+function anSynHtml() { return `<div id="an-syn-wrap">${anSynInner()}</div>`; }
+
+function anSynInner() {
+  const s = AN.syn, o = s && s.result; if (!o) return '';
   const L = a => (a || []).map(x => `<li>${acEsc(x)}</li>`).join('');
-  return `<div class="card" style="border-color:var(--amber);"><div class="section-label">🤖 สังเคราะห์ภาพรวมโดย AI (${AN.syn.n_cases} เคส · ${acEsc(AN.syn.model || '')})</div>
+  const head = `<div class="card" style="border-color:var(--amber);"><div class="section-label">🤖 สังเคราะห์ภาพรวมโดย AI (${s.n_cases} เคส · ${acEsc(s.model || '')})</div>
     <div style="font-size:13px;line-height:1.7;margin-bottom:10px;">${acEsc(o.summary || '')}</div>
-    <b style="font-size:12px;">รูปแบบข้ามเคส</b><ul style="font-size:12px;line-height:1.7;margin:4px 0 12px 18px;">${L(o.patterns)}</ul>
-    ${(o.hazards || []).map(h => `<div style="background:var(--navy);border-radius:10px;padding:10px 12px;margin-bottom:8px;font-size:12px;line-height:1.6;"><b style="color:var(--amber)">${acEsc(h.title)}</b> — ${acEsc(h.why)}<ul style="margin:4px 0 0 18px;">${L(h.lessons)}</ul><span style="color:var(--muted)">เน้นมาตรการ: ${acEsc(h.controls || '')}</span></div>`).join('')}
-    <b style="font-size:12px;">ข้อจำกัด/ควรตรวจซ้ำ</b><ul style="font-size:12px;line-height:1.7;margin:4px 0 0 18px;">${L(o.gaps)}</ul></div>`;
+    <b style="font-size:12px;">ข้อจำกัด/ควรตรวจซ้ำ</b><ul style="font-size:12px;line-height:1.7;margin:4px 0 6px 18px;">${L(o.gaps)}</ul>
+    <div style="font-size:11px;color:var(--muted);">ส่วนสรุปและข้อจำกัดนี้เห็นเฉพาะเจ้าหน้าที่ ไม่แสดงให้พนักงาน</div></div>`;
+
+  if (s._legacy) { // ยังไม่ได้รัน SQL เผยแพร่ → แสดงผลอย่างเดียว
+    return head + `<div class="card" style="border-color:var(--green);"><div class="section-label">เนื้อหาบทเรียน (แสดงผลอย่างเดียว)</div>
+      <div style="font-size:12px;color:var(--amber);margin-bottom:10px;">⚠ ยังไม่ได้รัน SQL ขั้นเผยแพร่ (accident_step5_publish.sql) จึงยังแก้/เผยแพร่ในหน้านี้ไม่ได้</div>
+      <b style="font-size:12px;">รูปแบบข้ามเคส</b><ul style="font-size:12px;line-height:1.7;margin:4px 0 12px 18px;">${L(o.patterns)}</ul>
+      ${(o.hazards || []).map(h => `<div style="background:var(--navy);border-radius:10px;padding:10px 12px;margin-bottom:8px;font-size:12px;line-height:1.6;"><b style="color:var(--amber)">${acEsc(h.title)}</b> — ${acEsc(h.why)}<ul style="margin:4px 0 0 18px;">${L(h.lessons)}</ul><span style="color:var(--muted)">เน้นมาตรการ: ${acEsc(h.controls || '')}</span></div>`).join('')}</div>`;
+  }
+
+  if (!AN.edit) anEditInit();
+  const E = AN.edit; if (!E) return head;
+  const fmt = d => d.toLocaleString('th-TH', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  const pub = s.published_at ? new Date(s.published_at) : null;
+  const by = s.published_by === 'system' ? 'ระบบ (เผยแพร่ครั้งแรกอัตโนมัติ)' : acEsc(s.published_by || '');
+  const newer = pub && s.created_at && new Date(s.created_at) > pub;
+  const status = !pub
+    ? `<div style="color:var(--red);">ยังไม่เคยเผยแพร่ — พนักงานยังไม่เห็นบทเรียน</div>`
+    : `<div style="color:var(--green);">เผยแพร่ล่าสุด ${fmt(pub)} โดย ${by}</div>`;
+  const warn = newer ? `<div style="color:var(--amber);margin-top:4px;">⚠ มีฉบับร่างใหม่กว่าที่เผยแพร่ (สังเคราะห์เมื่อ ${fmt(new Date(s.created_at))}) — ตรวจ/แก้แล้วกดเผยแพร่เพื่ออัปเดตให้พนักงาน</div>` : '';
+  const src = `<div style="color:var(--muted);margin-top:4px;">${E.from === 'published' ? 'กำลังแก้จากฉบับที่เผยแพร่อยู่' : 'กำลังแก้จากฉบับร่างของ AI'}</div>`;
+
+  const hz = E.hazards.map((h, i) => {
+    const st = h.stats
+      ? `<div style="font-size:12px;margin-bottom:8px;"><b style="color:var(--red)">${h.stats.deaths}</b> เสียชีวิต · <b style="color:var(--amber)">${h.stats.injured}</b> บาดเจ็บ · <b>${h.stats.cases}</b> เคส <span style="color:var(--muted)">(ตัวเลขมาจากโค้ด แก้ไม่ได้)</span></div>`
+      : `<div style="font-size:11px;color:var(--muted);margin-bottom:8px;">ผลสังเคราะห์รูปแบบเดิม ไม่มีตัวเลขประกอบ — กดสังเคราะห์ใหม่เพื่อให้มี</div>`;
+    const cl = h.control_levels || [];
+    const rows = cl.map((c, j) => `<div style="display:flex;gap:6px;margin-bottom:6px;flex-wrap:wrap;">
+        <select class="fi" id="ed-h${i}-c${j}-lv" style="flex:0 0 220px;width:220px;">${AN_LEVELS.map(l => `<option value="${acEsc(l)}"${l === c.level ? ' selected' : ''}>${acEsc(l)}</option>`).join('')}</select>
+        <input class="fi" id="ed-h${i}-c${j}-ac" maxlength="140" style="flex:1;min-width:180px;" value="${acEsc(c.action || '')}">
+        <button class="btn-sm red" onclick="anEdCtl(${i},${j},'del')">ลบ</button></div>`).join('');
+    const oldCtl = (!cl.length && h.controls) ? `<div style="font-size:11px;color:var(--muted);margin-bottom:6px;">ฉบับเดิมระบุระดับเดียว: ${acEsc(h.controls)}</div>` : '';
+    return `<div style="background:var(--navy);border-radius:10px;padding:12px 14px;margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:6px;">
+        <b style="color:var(--amber);font-size:12px;">จุดเสี่ยง ${i + 1}${h.type ? ' · ' + acEsc(h.type) : ''}</b>
+        <label style="font-size:11px;color:var(--muted);cursor:pointer;"><input type="checkbox" id="ed-h${i}-hide"${h.hide ? ' checked' : ''}> ไม่เผยแพร่จุดนี้</label></div>
+      ${st}
+      <div class="fg"><label class="fl">ชื่อจุดเสี่ยง</label><input class="fi" id="ed-h${i}-title" maxlength="100" value="${acEsc(h.title || '')}"></div>
+      <div class="fg"><label class="fl">เหตุผล (ทำไมอันตราย)</label><textarea class="fi" id="ed-h${i}-why" rows="2" maxlength="150" style="resize:vertical;line-height:1.5;">${acEsc(h.why || '')}</textarea></div>
+      <div class="fg"><label class="fl">สิ่งที่ต้องทำ (บรรทัดละข้อ สูงสุด 3 ข้อ)</label><textarea class="fi" id="ed-h${i}-les" rows="3" style="resize:vertical;line-height:1.5;">${acEsc((h.lessons || []).join('\n'))}</textarea></div>
+      <div class="fg" style="margin-bottom:0;"><label class="fl">มาตรการควบคุม (สูงสุด 3 รายการ — ตอนเผยแพร่จะเรียงจากระดับที่ดีที่สุดและตัดแถวที่ไม่มีข้อความ)</label>
+        ${oldCtl}${rows}<button class="btn-sm" onclick="anEdCtl(${i},-1,'add')"${cl.length >= 3 ? ' disabled' : ''}>+ เพิ่มมาตรการ</button></div></div>`;
+  }).join('');
+
+  return head + `<div class="card" style="border-color:var(--green);">
+    <div class="section-label">📘 เนื้อหาบทเรียนสำหรับพนักงาน — ตรวจ/แก้ก่อนเผยแพร่</div>
+    <div style="font-size:12px;line-height:1.6;margin-bottom:12px;">${status}${warn}${src}</div>
+    <div class="fg"><label class="fl">รูปแบบที่เกิดซ้ำ (บรรทัดละข้อ สูงสุด 3 ข้อ)</label><textarea class="fi" id="ed-pat" rows="4" style="resize:vertical;line-height:1.5;">${acEsc((E.patterns || []).join('\n'))}</textarea></div>
+    ${hz}
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:6px;">
+      <button class="btn-prim" id="an-pub" onclick="anPublish()">📢 เผยแพร่ให้พนักงาน</button>
+      ${E.from === 'published' ? `<button class="btn-sm" onclick="anEditFrom('draft')">รีเซ็ตเป็นฉบับ AI ล่าสุด</button>` : (s.published ? `<button class="btn-sm" onclick="anEditFrom('published')">โหลดฉบับที่เผยแพร่อยู่มาแก้</button>` : '')}
+      <span id="an-pubmsg" style="font-size:12px;"></span></div>
+    <div style="font-size:11px;color:var(--muted);margin-top:8px;">มาตรการและบทเรียนเป็นข้อเสนอเบื้องต้นจาก AI — การกำหนดมาตรการจริงเป็นดุลยพินิจของเจ้าหน้าที่</div></div>`;
+}
+
+async function anPublish() {
+  anEditCollect();
+  const E = AN.edit, msg = document.getElementById('an-pubmsg'), btn = document.getElementById('an-pub');
+  const hz = E.hazards.filter(h => !h.hide).map(h => {
+    const seen = new Set(), cl = [];
+    (h.control_levels || []).forEach(c => { const a = String(c.action || '').trim(); if (a && !seen.has(c.level)) { seen.add(c.level); cl.push({ level: c.level, action: a.slice(0, 140) }); } });
+    cl.sort((a, b) => AN_LEVELS.indexOf(a.level) - AN_LEVELS.indexOf(b.level));
+    return { type: h.type || null, title: h.title, why: h.why, lessons: h.lessons, controls: (cl[0] && cl[0].level) || h.controls || null, control_levels: cl };
+  });
+  if (!hz.length) { msg.innerHTML = '<span style="color:var(--red)">ต้องมีจุดเสี่ยงที่เผยแพร่อย่างน้อย 1 จุด</span>'; return; }
+  if (hz.some(h => !h.title)) { msg.innerHTML = '<span style="color:var(--red)">ทุกจุดเสี่ยงต้องมีชื่อ</span>'; return; }
+  if (!confirm(`เผยแพร่ ${hz.length} จุดเสี่ยงให้พนักงานทุกคนเห็นทันที ใช่หรือไม่?`)) return;
+  btn.disabled = true; msg.textContent = '⏳ กำลังเผยแพร่...';
+  try {
+    const res = await fetch(`${SB_URL}/rest/v1/rpc/accident_publish_synthesis`, { method: 'POST', headers: sbHeaders,
+      body: JSON.stringify({ p_emp_code: AN.code, p_password: AN.pw, p_content: { patterns: E.patterns, hazards: hz } }) });
+    const j = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(j.message === 'unauthorized' ? 'ไม่มีสิทธิ์เผยแพร่' : (j.message || `เซิร์ฟเวอร์ตอบ ${res.status}`));
+    await anLoadSyn();
+    showToast('✅ เผยแพร่แล้ว — พนักงานเห็นเนื้อหานี้ทันที');
+  } catch (e) { msg.innerHTML = `<span style="color:var(--red)">❌ ${acEsc(e.message)}</span>`; btn.disabled = false; }
 }
 
 async function anAiBatch() {
@@ -2106,8 +2232,9 @@ async function anAiBatch() {
     const res = await fetch(`${SB_URL}/functions/v1/accident-ai`, { method: 'POST', headers: sbHeaders, body: JSON.stringify({ emp_code: AN.code, password: AN.pw, mode: 'synthesize' }) });
     const j = await res.json().catch(() => ({}));
     if (!res.ok || !j.ok) throw new Error(j.error || `เซิร์ฟเวอร์ตอบ ${res.status}`);
-    AN.syn = { result: j.result, n_cases: j.n_cases, model: j.model }; anRender();
-    document.getElementById('an-aimsg').textContent = '✅ เสร็จแล้ว';
+    AN.syn = { ...(AN.syn || {}), result: j.result, n_cases: j.n_cases, model: j.model, created_at: new Date().toISOString() }; AN.edit = null; anRender();
+    await anLoadSyn(); // โหลดสถานะการเผยแพร่จริงจากเซิร์ฟเวอร์
+    document.getElementById('an-aimsg').textContent = '✅ เสร็จแล้ว — ตรวจ/แก้ในส่วน "เนื้อหาบทเรียนสำหรับพนักงาน" แล้วกดเผยแพร่';
   } catch (e) { msg.innerHTML = `<span style="color:var(--red)">❌ ${acEsc(e.message)}</span>`; }
   btn.disabled = false;
 }
