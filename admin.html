@@ -78,8 +78,9 @@ body{font-family:'Sarabun',sans-serif;background:var(--navy);color:var(--white);
 .btn-d{background:transparent;border:1.5px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--muted);font-family:'Sarabun',sans-serif;font-size:12px;cursor:pointer;}
 .btn-prim{background:linear-gradient(135deg,var(--green),var(--greendk));border:none;border-radius:10px;padding:11px 20px;color:#001a08;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;cursor:pointer;}
 .btn-amber{background:linear-gradient(135deg,var(--amber),#d97706);border:none;border-radius:10px;padding:11px 20px;color:#1a0a00;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;cursor:pointer;}
-.btn-sm{background:transparent;border:1.5px solid var(--border);border-radius:8px;padding:5px 10px;color:var(--muted);font-family:'Sarabun',sans-serif;font-size:11px;cursor:pointer;transition:all .2s;}
-.btn-sm:hover{border-color:var(--green);color:var(--green);}
+.btn-sm{background:transparent;border:1.5px solid var(--gold);border-radius:8px;padding:5px 10px;color:var(--gold);font-family:'Sarabun',sans-serif;font-size:11px;cursor:pointer;transition:all .2s;}
+.btn-sm:not(:disabled):hover{background:rgba(255,215,0,.14);}
+.btn-sm:disabled{opacity:.4;cursor:not-allowed;}
 .btn-sm.red{border-color:var(--red);color:var(--red);}
 
 /* DONE STATES */
@@ -2053,7 +2054,7 @@ function anRender() {
   }).join('');
   const tt = types.slice(0, 5).map(x => x[0]);
   const mx = jobs.map(([j]) => `<tr><td>${acEsc(j)}</td>${tt.map(t => { const n = R.filter(r => r.job_type === j && r.accident_type === t).length; return `<td style="text-align:center;${n ? 'color:var(--green);font-weight:700;' : 'color:var(--muted);'}">${n || '·'}</td>`; }).join('')}</tr>`).join('');
-  const ev = R.map(r => { return `<tr><td>${r.di_no}</td><td>${r.occurred_date || '—'}</td><td>${acEsc(r.zone || '—')}</td><td>${acEsc(r.accident_type_raw || r.accident_type || '—')}</td><td>${acEsc(r.severity || '—')}</td><td><button class="btn-sm" onclick="anDetail(${r.di_no})">รายละเอียด</button></td></tr>`; }).join('');
+  const ev = R.map(r => { return `<tr><td>${r.di_no}</td><td>${r.occurred_date || '—'}</td><td>${acEsc(r.zone || '—')}</td><td>${acEsc(r.accident_type_raw || r.accident_type || '—')}</td><td${String(r.severity || '').includes('เสียชีวิต') ? ' style="color:var(--red);font-weight:700;"' : ''}>${acEsc(r.severity || '—')}</td><td><button class="btn-sm" onclick="anDetail(${r.di_no})">รายละเอียด</button></td></tr>`; }).join('');
   document.getElementById('an-body').innerHTML = `
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:14px;">
       ${card(N, 'เหตุการณ์', 'var(--green)')}${card(sum('deaths'), 'เสียชีวิต (คน)', 'var(--red)')}${card(sum('injured'), 'บาดเจ็บ (คน)', 'var(--amber)')}${card(sum('limb_loss'), 'สูญเสียอวัยวะ (คน)', 'var(--ice)')}</div>
@@ -2064,8 +2065,8 @@ function anRender() {
       <div style="font-size:11px;color:var(--muted);margin-top:8px;">ข้อมูล ${N} เหตุ ใช้เป็นระดับประกอบดุลยพินิจ ไม่ใช่ความน่าจะเป็น</div></div>
     <div class="card"><div class="section-label">ความเชื่อมโยง ประเภทงาน × ลักษณะเหตุ</div>
       <div style="overflow:auto;"><table class="tbl"><thead><tr><th>ประเภทงาน</th>${tt.map(t => `<th>${acEsc(t)}</th>`).join('')}</tr></thead><tbody>${mx}</tbody></table></div></div>
-    ${anSynHtml()}
     <div class="card"><div class="section-label">🤖 AI ผู้เชี่ยวชาญด้านความปลอดภัย</div><div style="font-size:12px;color:var(--muted);margin-bottom:10px;">ให้ AI อ่านทุกเคสพร้อมกัน หารูปแบบซ้ำ จุดเสี่ยงสำคัญ บทเรียนสำหรับพนักงาน และตรวจเคสที่ช่องข้อมูลไม่ตรงกับเนื้อความ ผลที่ได้เป็น <b>ฉบับร่าง</b> — ต้องตรวจ/แก้แล้วกด "เผยแพร่" ก่อนพนักงานจึงจะเห็นฉบับใหม่</div><button class="btn-prim" id="an-ai" onclick="anAiBatch()">🤖 สรุปภาพรวมด้วย AI</button> <span id="an-aimsg" style="font-size:12px;margin-left:8px;"></span></div>
+    ${anSynHtml()}
     <div id="an-edit"></div>
     <div class="card"><div class="section-label">รายการเหตุการณ์ — กด "รายละเอียด" เพื่ออ่านเหตุการณ์</div>
       <div style="overflow:auto;max-height:460px;"><table class="tbl"><thead><tr><th>DI</th><th>วันที่</th><th>โซน</th><th>ลักษณะ</th><th>รุนแรง</th><th></th></tr></thead><tbody>${ev}</tbody></table></div></div>`;
@@ -2083,6 +2084,7 @@ function anDetail(di) {
 
 const AN_LEVELS = ['ขจัด (Elimination)', 'ทดแทน (Substitution)', 'วิศวกรรม (Engineering)', 'บริหารจัดการ (Administrative)', 'PPE'];
 // รวมกลุ่ม "การใช้ยานพาหนะ" ทุกแบบ ให้ตรงกับ dashboard ของพนักงานและ accident-ai
+const anLvLabel = l => l === 'PPE' ? 'อุปกรณ์ความปลอดภัย (PPE)' : l; // เปลี่ยนเฉพาะข้อความที่แสดง ค่าที่เก็บยังเป็น 'PPE'
 const anType = t => (t && String(t).trim().startsWith('การใช้ยานพาหนะ')) ? 'การใช้ยานพาหนะ' : t;
 
 async function anLoadSyn() {
@@ -2133,9 +2135,15 @@ function anEdCtl(i, j, op) {
   if (op === 'del') h.control_levels.splice(j, 1);
   anSynRefresh();
 }
-function anOpenDI(di) {
-  if (AN.rows.some(r => r.di_no === di)) anDetail(di);
-  else showToast('ไม่พบ DI นี้ในข้อมูลที่โหลด', 'amber');
+// กดเลข DI ใต้รูปแบบ → แสดงเหตุการณ์ของเคสนั้นตรงนั้นเลย (กดซ้ำเพื่อปิด) เพื่อเทียบกับข้อความของรูปแบบได้โดยไม่ต้องเลื่อนหน้า
+function anEvDI(i, di) {
+  const box = document.getElementById(`ev-detail-${i}`); if (!box) return;
+  const r = AN.rows.find(x => x.di_no === di);
+  if (!r || box.dataset.di === String(di)) { box.innerHTML = ''; box.dataset.di = ''; return; }
+  box.dataset.di = String(di);
+  box.innerHTML = `<div style="background:var(--navy);border-radius:8px;padding:10px 12px;margin:8px 0 4px;font-size:12px;line-height:1.7;">
+    <b style="color:var(--amber)">DI ${di}</b> · ${acEsc(r.accident_type_raw || r.accident_type || '—')} · ${acEsc(r.job_type || '—')} · ${acEsc(r.severity || '—')} · ตาย ${r.deaths} · บาดเจ็บ ${r.injured} · สูญเสียอวัยวะ ${r.limb_loss}
+    <div style="white-space:pre-wrap;margin-top:6px;color:var(--ice);">${acEsc(r.description || '—')}</div></div>`;
 }
 function anSynRefresh() { const el = document.getElementById('an-syn-wrap'); if (el) el.innerHTML = anSynInner(); }
 function anSynHtml() { return `<div id="an-syn-wrap">${anSynInner()}</div>`; }
@@ -2144,28 +2152,26 @@ function anSynInner() {
   const s = AN.syn, o = s && s.result; if (!o) return '';
   const L = a => (a || []).map(x => `<li>${acEsc(x)}</li>`).join('');
   const evs = Array.isArray(o.pattern_evidence) ? o.pattern_evidence : [];
-  const evHtml = ((o.patterns || []).length && evs.length)
-    ? `<b style="font-size:12px;">หลักฐานของรูปแบบที่ AI เสนอ <span style="font-weight:400;color:var(--muted);">(ตรวจได้จากรายการเหตุการณ์ด้านล่าง — ระบบตรวจแล้วว่าเลข DI มีอยู่จริง แต่ไม่ได้ตรวจว่าเนื้อหาเคสสนับสนุนรูปแบบนั้นจริง)</span></b>
-       <ul style="font-size:12px;line-height:1.7;margin:4px 0 8px 18px;">${(o.patterns || []).map((p, i) => { const e = evs[i] || {}, di = e.di || [], n = di.length;
-         return `<li>${acEsc(String(p).slice(0, 70))}… — ${n >= 3 ? `พบใน <b>${n}</b> เคส` : `<span style="color:var(--amber)">⚠ หลักฐานเพียง ${n} เคส</span>`} <span style="color:var(--muted)">${n ? '(DI ' + di.join(', ') + ')' : ''}</span></li>`; }).join('')}</ul>` : '';
-  const chk = Array.isArray(o.data_checks) ? o.data_checks : null;
-  const muted = 'font-size:12px;color:var(--muted);margin:6px 0 10px;';
-  const chkHtml = chk
-    ? (chk.length
-        ? `<ul style="list-style:none;margin:6px 0 10px;padding:0;">${chk.map(c => `<li style="font-size:12px;line-height:1.6;margin-bottom:8px;display:flex;gap:8px;align-items:flex-start;"><button class="btn-sm" onclick="anOpenDI(${Number(c.di)})">DI ${Number(c.di)}</button><span><span style="color:var(--amber)">${acEsc(c.kind)}</span> — ${acEsc(c.note)}</span></li>`).join('')}</ul>`
-        : `<div style="${muted}">AI ไม่พบความขัดแย้งระหว่างช่องข้อมูลกับเนื้อความ (ไม่ได้รับประกันว่าไม่มี)</div>`)
-    : `<div style="${muted}">ฉบับร่างนี้สร้างด้วยรูปแบบเดิม ไม่มีรายการตรวจข้อมูลรายเคส — กดสรุปด้วย AI ใหม่เพื่อให้มี</div>${(o.gaps || []).length ? `<ul style="font-size:12px;line-height:1.7;margin:0 0 10px 18px;">${L(o.gaps)}</ul>` : ''}`;
-  const head = `<div class="card" style="border-color:var(--amber);"><div class="section-label">🤖 ผลตรวจจาก AI (${s.n_cases} เคส · ${acEsc(s.model || '')})</div>
-    <b style="font-size:12px;">เคสที่ควรตรวจข้อมูลซ้ำ <span style="font-weight:400;color:var(--muted);">(ช่องข้อมูลอาจไม่ตรงกับเนื้อความ — กดเลข DI เพื่ออ่านเหตุการณ์)</span></b>
-    ${chkHtml}
+  const pats = o.patterns || [];
+  const evHtml = pats.length
+    ? `<ul style="list-style:none;margin:10px 0 12px;padding:0;">${pats.map((p, i) => {
+        const e = evs[i], di = (e && e.di) || [], n = di.length;
+        const status = !e ? '' : (n >= 3 ? `<span style="color:var(--green)">พบใน <b>${n}</b> เคส</span>` : `<span style="color:var(--amber)">⚠ หลักฐานเพียง ${n} เคส — ควรพิจารณาตัดหรือแก้ข้อความ</span>`);
+        return `<li style="margin-bottom:16px;"><div style="font-size:13px;line-height:1.7;">${acEsc(p)}</div>
+          <div style="font-size:12px;margin-top:6px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;">${status}${di.map(d => `<button class="btn-sm" onclick="anEvDI(${i},${Number(d)})">DI ${Number(d)}</button>`).join('')}</div>
+          <div id="ev-detail-${i}"></div></li>`;
+      }).join('')}</ul>`
+    : `<div style="font-size:12px;color:var(--muted);margin:10px 0;">ยังไม่มีรูปแบบที่เกิดซ้ำในฉบับร่างนี้</div>`;
+  const head = `<div class="card" style="border-color:var(--amber);"><div class="section-label">🤖 รูปแบบที่ AI พบและหลักฐาน (${s.n_cases} เคส · ${acEsc(s.model || '')})</div>
+    <div style="font-size:12px;color:var(--muted);line-height:1.6;">ฉบับร่างจาก AI — กดเลข DI เพื่ออ่านเหตุการณ์ของเคสที่เป็นหลักฐานได้ทันที ระบบตรวจแล้วว่าเลข DI มีอยู่จริง แต่ไม่ได้ตรวจว่าเนื้อหาเคสสนับสนุนรูปแบบนั้นจริง ต้องอ่านเทียบเอง</div>
     ${evHtml}
-    <div style="font-size:11px;color:var(--muted);">ส่วนนี้เห็นเฉพาะเจ้าหน้าที่ ไม่แสดงให้พนักงาน</div></div>`;
+    <div style="font-size:11px;color:var(--muted);">ส่วนนี้เห็นเฉพาะเจ้าหน้าที่ ไม่แสดงให้พนักงาน — เนื้อหาที่พนักงานเห็นแก้ได้ในการ์ดสีเขียวด้านล่าง</div></div>`;
 
   if (s._legacy) { // ยังไม่ได้รัน SQL เผยแพร่ → แสดงผลอย่างเดียว
     return head + `<div class="card" style="border-color:var(--green);"><div class="section-label">เนื้อหาบทเรียน (แสดงผลอย่างเดียว)</div>
       <div style="font-size:12px;color:var(--amber);margin-bottom:10px;">⚠ ยังไม่ได้รัน SQL ขั้นเผยแพร่ (accident_step5_publish.sql) จึงยังแก้/เผยแพร่ในหน้านี้ไม่ได้</div>
       <b style="font-size:12px;">รูปแบบข้ามเคส</b><ul style="font-size:12px;line-height:1.7;margin:4px 0 12px 18px;">${L(o.patterns)}</ul>
-      ${(o.hazards || []).map(h => `<div style="background:var(--navy);border-radius:10px;padding:10px 12px;margin-bottom:8px;font-size:12px;line-height:1.6;"><b style="color:var(--amber)">${acEsc(h.title)}</b> — ${acEsc(h.why)}<ul style="margin:4px 0 0 18px;">${L(h.lessons)}</ul><span style="color:var(--muted)">เน้นมาตรการ: ${acEsc(h.controls || '')}</span></div>`).join('')}</div>`;
+      ${(o.hazards || []).map(h => `<div style="background:var(--navy);border-radius:10px;padding:10px 12px;margin-bottom:8px;font-size:12px;line-height:1.6;"><b style="color:var(--amber)">${acEsc(h.title)}</b> — ${acEsc(h.why)}<ul style="margin:4px 0 0 18px;">${L(h.lessons)}</ul><span style="color:var(--muted)">เน้นมาตรการ: ${acEsc(anLvLabel(h.controls || ''))}</span></div>`).join('')}</div>`;
   }
 
   if (!AN.edit) anEditInit();
@@ -2186,10 +2192,10 @@ function anSynInner() {
       : `<div style="font-size:11px;color:var(--muted);margin-bottom:8px;">ผลสังเคราะห์รูปแบบเดิม ไม่มีตัวเลขประกอบ — กดสังเคราะห์ใหม่เพื่อให้มี</div>`;
     const cl = h.control_levels || [];
     const rows = cl.map((c, j) => `<div style="display:flex;gap:6px;margin-bottom:6px;flex-wrap:wrap;">
-        <select class="fi" id="ed-h${i}-c${j}-lv" style="flex:0 0 220px;width:220px;">${AN_LEVELS.map(l => `<option value="${acEsc(l)}"${l === c.level ? ' selected' : ''}>${acEsc(l)}</option>`).join('')}</select>
+        <select class="fi" id="ed-h${i}-c${j}-lv" style="flex:0 0 260px;width:260px;">${AN_LEVELS.map(l => `<option value="${acEsc(l)}"${l === c.level ? ' selected' : ''}>${acEsc(anLvLabel(l))}</option>`).join('')}</select>
         <input class="fi" id="ed-h${i}-c${j}-ac" maxlength="140" style="flex:1;min-width:180px;" value="${acEsc(c.action || '')}">
         <button class="btn-sm red" onclick="anEdCtl(${i},${j},'del')">ลบ</button></div>`).join('');
-    const oldCtl = (!cl.length && h.controls) ? `<div style="font-size:11px;color:var(--muted);margin-bottom:6px;">ฉบับเดิมระบุระดับเดียว: ${acEsc(h.controls)}</div>` : '';
+    const oldCtl = (!cl.length && h.controls) ? `<div style="font-size:11px;color:var(--muted);margin-bottom:6px;">ฉบับเดิมระบุระดับเดียว: ${acEsc(anLvLabel(h.controls))}</div>` : '';
     return `<div style="background:var(--navy);border-radius:10px;padding:12px 14px;margin-bottom:10px;">
       <div style="display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:6px;">
         <b style="color:var(--amber);font-size:12px;">จุดเสี่ยง ${i + 1}${h.type ? ' · ' + acEsc(h.type) : ''}</b>
@@ -2198,7 +2204,7 @@ function anSynInner() {
       <div class="fg"><label class="fl">ชื่อจุดเสี่ยง</label><input class="fi" id="ed-h${i}-title" maxlength="100" value="${acEsc(h.title || '')}"></div>
       <div class="fg"><label class="fl">เหตุผล (ทำไมอันตราย)</label><textarea class="fi" id="ed-h${i}-why" rows="2" maxlength="150" style="resize:vertical;line-height:1.5;">${acEsc(h.why || '')}</textarea></div>
       <div class="fg"><label class="fl">สิ่งที่ต้องทำ (บรรทัดละข้อ สูงสุด 3 ข้อ)</label><textarea class="fi" id="ed-h${i}-les" rows="3" style="resize:vertical;line-height:1.5;">${acEsc((h.lessons || []).join('\n'))}</textarea></div>
-      <div class="fg" style="margin-bottom:0;"><label class="fl">มาตรการควบคุม (สูงสุด 3 รายการ — ตอนเผยแพร่จะเรียงจากระดับที่ดีที่สุดและตัดแถวที่ไม่มีข้อความ)</label>
+      <div class="fg" style="margin-bottom:0;border:1.5px solid var(--gold);border-radius:10px;padding:10px 12px;"><label class="fl">มาตรการควบคุม (สูงสุด 3 รายการ — ตอนเผยแพร่จะเรียงจากระดับที่ดีที่สุดและตัดแถวที่ไม่มีข้อความ)</label>
         ${oldCtl}${rows}<button class="btn-sm" onclick="anEdCtl(${i},-1,'add')"${cl.length >= 3 ? ' disabled' : ''}>+ เพิ่มมาตรการ</button></div></div>`;
   }).join('');
 
