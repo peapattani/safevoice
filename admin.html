@@ -78,10 +78,15 @@ body{font-family:'Sarabun',sans-serif;background:var(--navy);color:var(--white);
 .btn-d{background:transparent;border:1.5px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--muted);font-family:'Sarabun',sans-serif;font-size:12px;cursor:pointer;}
 .btn-prim{background:linear-gradient(135deg,var(--green),var(--greendk));border:none;border-radius:10px;padding:11px 20px;color:#001a08;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;cursor:pointer;}
 .btn-amber{background:linear-gradient(135deg,var(--amber),#d97706);border:none;border-radius:10px;padding:11px 20px;color:#1a0a00;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;cursor:pointer;}
-.btn-sm{background:transparent;border:1.5px solid var(--gold);border-radius:8px;padding:5px 10px;color:var(--gold);font-family:'Sarabun',sans-serif;font-size:11px;cursor:pointer;transition:all .2s;}
-.btn-sm:not(:disabled):hover{background:rgba(255,215,0,.14);}
+.btn-sm{background:transparent;border:1.5px solid var(--amber);border-radius:8px;padding:5px 10px;color:var(--amber);font-family:'Sarabun',sans-serif;font-size:11px;cursor:pointer;transition:all .2s;}
+.btn-sm:not(:disabled):hover{background:rgba(245,158,11,.14);}
 .btn-sm:disabled{opacity:.4;cursor:not-allowed;}
 .btn-sm.red{border-color:var(--red);color:var(--red);}
+.btn-sm.red:not(:disabled):hover{background:rgba(239,68,68,.14);}
+.btn-plain{border-color:var(--border);color:var(--muted);}
+.btn-plain:not(:disabled):hover{background:transparent;border-color:var(--green);color:var(--green);}
+.btn-di{border-color:var(--muted);color:var(--ice);}
+.btn-di:not(:disabled):hover{background:rgba(232,244,255,.12);}
 
 /* DONE STATES */
 .done-v{background:#00c96a11;border:1px solid #00c96a33;color:var(--green);border-radius:8px;padding:8px 14px;font-size:12px;font-weight:600;text-align:center;margin-bottom:5px;}
@@ -2054,7 +2059,7 @@ function anRender() {
   }).join('');
   const tt = types.slice(0, 5).map(x => x[0]);
   const mx = jobs.map(([j]) => `<tr><td>${acEsc(j)}</td>${tt.map(t => { const n = R.filter(r => r.job_type === j && r.accident_type === t).length; return `<td style="text-align:center;${n ? 'color:var(--green);font-weight:700;' : 'color:var(--muted);'}">${n || '·'}</td>`; }).join('')}</tr>`).join('');
-  const ev = R.map(r => { return `<tr><td>${r.di_no}</td><td>${r.occurred_date || '—'}</td><td>${acEsc(r.zone || '—')}</td><td>${acEsc(r.accident_type_raw || r.accident_type || '—')}</td><td${String(r.severity || '').includes('เสียชีวิต') ? ' style="color:var(--red);font-weight:700;"' : ''}>${acEsc(r.severity || '—')}</td><td><button class="btn-sm" onclick="anDetail(${r.di_no})">รายละเอียด</button></td></tr>`; }).join('');
+  const ev = R.map(r => { return `<tr><td>${r.di_no}</td><td>${r.occurred_date || '—'}</td><td>${acEsc(r.zone || '—')}</td><td>${acEsc(r.accident_type_raw || r.accident_type || '—')}</td><td${String(r.severity || '').includes('เสียชีวิต') ? ' style="color:var(--red);font-weight:700;"' : ''}>${acEsc(r.severity || '—')}</td><td><button class="btn-sm btn-plain" onclick="anDetail(${r.di_no})">รายละเอียด</button></td></tr>`; }).join('');
   document.getElementById('an-body').innerHTML = `
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:14px;">
       ${card(N, 'เหตุการณ์', 'var(--green)')}${card(sum('deaths'), 'เสียชีวิต (คน)', 'var(--red)')}${card(sum('injured'), 'บาดเจ็บ (คน)', 'var(--amber)')}${card(sum('limb_loss'), 'สูญเสียอวัยวะ (คน)', 'var(--ice)')}</div>
@@ -2085,6 +2090,14 @@ function anDetail(di) {
 const AN_LEVELS = ['ขจัด (Elimination)', 'ทดแทน (Substitution)', 'วิศวกรรม (Engineering)', 'บริหารจัดการ (Administrative)', 'PPE'];
 // รวมกลุ่ม "การใช้ยานพาหนะ" ทุกแบบ ให้ตรงกับ dashboard ของพนักงานและ accident-ai
 const anLvLabel = l => l === 'PPE' ? 'อุปกรณ์ความปลอดภัย (PPE)' : l; // เปลี่ยนเฉพาะข้อความที่แสดง ค่าที่เก็บยังเป็น 'PPE'
+// รูปแบบที่เกิดซ้ำ: ของใหม่เป็นอ็อบเจ็กต์ {title, where, basis, assumption}; ของเดิมเป็นข้อความยาว (string) → ห่อเป็น {text}
+const anNormPat = p => (typeof p === 'string') ? { text: p } : Object.assign({}, p);
+const anPatView = p => {
+  const q = anNormPat(p);
+  if (!q.title) return `<div style="font-size:13px;line-height:1.7;">${acEsc(q.text || '')}</div>`;
+  const line = (lab, v) => v ? `<div style="font-size:13px;line-height:1.7;"><span style="color:var(--muted);">${lab}</span> ${acEsc(v)}</div>` : '';
+  return `<div style="font-size:13px;font-weight:700;line-height:1.6;margin-bottom:2px;">${acEsc(q.title)}</div>${line('เกิดซ้ำที่:', q.where)}${line('ที่มา:', q.basis)}${line('ข้อสันนิษฐาน:', q.assumption)}`;
+};
 const anType = t => (t && String(t).trim().startsWith('การใช้ยานพาหนะ')) ? 'การใช้ยานพาหนะ' : t;
 
 async function anLoadSyn() {
@@ -2116,7 +2129,13 @@ function anEditCollect() {
   const E = AN.edit; if (!E) return;
   const g = id => document.getElementById(id);
   const lines = (v, n) => String(v || '').split('\n').map(x => x.trim()).filter(Boolean).slice(0, n);
-  if (g('ed-pat')) E.patterns = lines(g('ed-pat').value, 5);
+  E.patterns = (E.patterns || []).map((p, i) => {
+    if (!g(`ed-p${i}-hide`)) return p; // ยังไม่ได้แสดงในหน้า
+    const hide = g(`ed-p${i}-hide`).checked;
+    if (g(`ed-p${i}-text`)) return { text: g(`ed-p${i}-text`).value.trim(), hide };
+    const v = k => g(`ed-p${i}-${k}`).value.trim();
+    return { title: v('title'), where: v('where'), basis: v('basis'), assumption: v('assumption'), hide };
+  });
   E.hazards.forEach((h, i) => {
     if (!g(`ed-h${i}-title`)) return;
     h.title = g(`ed-h${i}-title`).value.trim();
@@ -2157,8 +2176,8 @@ function anSynInner() {
     ? `<ul style="list-style:none;margin:10px 0 12px;padding:0;">${pats.map((p, i) => {
         const e = evs[i], di = (e && e.di) || [], n = di.length;
         const status = !e ? '' : (n >= 3 ? `<span style="color:var(--green)">พบใน <b>${n}</b> เคส</span>` : `<span style="color:var(--amber)">⚠ หลักฐานเพียง ${n} เคส — ควรพิจารณาตัดหรือแก้ข้อความ</span>`);
-        return `<li style="margin-bottom:16px;"><div style="font-size:13px;line-height:1.7;">${acEsc(p)}</div>
-          <div style="font-size:12px;margin-top:6px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;">${status}${di.map(d => `<button class="btn-sm" onclick="anEvDI(${i},${Number(d)})">DI ${Number(d)}</button>`).join('')}</div>
+        return `<li style="margin-bottom:16px;">${anPatView(p)}
+          <div style="font-size:12px;margin-top:6px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;">${status}${di.map(d => `<button class="btn-sm btn-di" onclick="anEvDI(${i},${Number(d)})">DI ${Number(d)}</button>`).join('')}</div>
           <div id="ev-detail-${i}"></div></li>`;
       }).join('')}</ul>`
     : `<div style="font-size:12px;color:var(--muted);margin:10px 0;">ยังไม่มีรูปแบบที่เกิดซ้ำในฉบับร่างนี้</div>`;
@@ -2188,7 +2207,7 @@ function anSynInner() {
 
   const hz = E.hazards.map((h, i) => {
     const st = h.stats
-      ? `<div style="font-size:12px;margin-bottom:8px;"><b style="color:var(--red)">${h.stats.deaths}</b> เสียชีวิต · <b style="color:var(--amber)">${h.stats.injured}</b> บาดเจ็บ · <b>${h.stats.cases}</b> เคส <span style="color:var(--muted)">(ตัวเลขมาจากโค้ด แก้ไม่ได้)</span></div>`
+      ? `<div style="font-size:12px;margin-bottom:8px;"><b style="color:var(--red)">${h.stats.deaths}</b> เสียชีวิต · <b>${h.stats.injured}</b> บาดเจ็บ · <b>${h.stats.cases}</b> เคส <span style="color:var(--muted)">(ตัวเลขมาจากโค้ด แก้ไม่ได้)</span></div>`
       : `<div style="font-size:11px;color:var(--muted);margin-bottom:8px;">ผลสังเคราะห์รูปแบบเดิม ไม่มีตัวเลขประกอบ — กดสังเคราะห์ใหม่เพื่อให้มี</div>`;
     const cl = h.control_levels || [];
     const rows = cl.map((c, j) => `<div style="display:flex;gap:6px;margin-bottom:6px;flex-wrap:wrap;">
@@ -2204,14 +2223,25 @@ function anSynInner() {
       <div class="fg"><label class="fl">ชื่อจุดเสี่ยง</label><input class="fi" id="ed-h${i}-title" maxlength="100" value="${acEsc(h.title || '')}"></div>
       <div class="fg"><label class="fl">เหตุผล (ทำไมอันตราย)</label><textarea class="fi" id="ed-h${i}-why" rows="2" maxlength="150" style="resize:vertical;line-height:1.5;">${acEsc(h.why || '')}</textarea></div>
       <div class="fg"><label class="fl">สิ่งที่ต้องทำ (บรรทัดละข้อ สูงสุด 3 ข้อ)</label><textarea class="fi" id="ed-h${i}-les" rows="3" style="resize:vertical;line-height:1.5;">${acEsc((h.lessons || []).join('\n'))}</textarea></div>
-      <div class="fg" style="margin-bottom:0;border:1.5px solid var(--gold);border-radius:10px;padding:10px 12px;"><label class="fl">มาตรการควบคุม (สูงสุด 3 รายการ — ตอนเผยแพร่จะเรียงจากระดับที่ดีที่สุดและตัดแถวที่ไม่มีข้อความ)</label>
+      <div class="fg" style="margin-bottom:0;"><label class="fl">มาตรการควบคุม (สูงสุด 3 รายการ — ตอนเผยแพร่จะเรียงจากระดับที่ดีที่สุดและตัดแถวที่ไม่มีข้อความ)</label>
         ${oldCtl}${rows}<button class="btn-sm" onclick="anEdCtl(${i},-1,'add')"${cl.length >= 3 ? ' disabled' : ''}>+ เพิ่มมาตรการ</button></div></div>`;
   }).join('');
 
+  const patEd = (E.patterns || []).map((p, i) => {
+    const q = anNormPat(p), legacy = !q.title && q.text !== undefined;
+    const fld = (k, lab, rows, max) => `<div class="fg"><label class="fl">${lab}</label><textarea class="fi" id="ed-p${i}-${k}" rows="${rows}"${max ? ` maxlength="${max}"` : ''} style="resize:vertical;line-height:1.5;">${acEsc(q[k] || '')}</textarea></div>`;
+    return `<div style="background:var(--navy);border-radius:10px;padding:12px 14px;margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:6px;">
+        <b style="color:var(--amber);font-size:12px;">รูปแบบ ${i + 1}${legacy ? ' · ฉบับเดิม' : ''}</b>
+        <label style="font-size:11px;color:var(--muted);cursor:pointer;"><input type="checkbox" id="ed-p${i}-hide"${q.hide ? ' checked' : ''}> ไม่เผยแพร่รูปแบบนี้</label></div>
+      ${legacy ? fld('text', 'ข้อความรูปแบบ (ฉบับเดิม เป็นย่อหน้าเดียว — กดสังเคราะห์ใหม่เพื่อให้ได้แบบแยกหัวข้อ)', 4, 0)
+               : fld('title', 'หัวข้อ (เหตุที่เกิดซ้ำ)', 2, 160) + fld('where', 'เกิดซ้ำที่ (งาน/กลุ่มผู้ประสบ/เงื่อนไข)', 2, 200) + fld('basis', 'ที่มา (หลักฐานจากเนื้อความและตัวเลข)', 3, 300) + fld('assumption', 'ข้อสันนิษฐาน (เว้นว่างได้ — ถ้าไม่ใช่สิ่งที่ปรากฏในเนื้อความ)', 2, 200)}</div>`;
+  }).join('') || `<div style="font-size:12px;color:var(--muted);margin-bottom:10px;">ไม่มีรูปแบบที่เกิดซ้ำในฉบับนี้</div>`;
   return head + `<div class="card" style="border-color:var(--green);">
     <div class="section-label">📘 เนื้อหาบทเรียนสำหรับพนักงาน — ตรวจ/แก้ก่อนเผยแพร่</div>
     <div style="font-size:12px;line-height:1.6;margin-bottom:12px;">${status}${warn}${src}</div>
-    <div class="fg"><label class="fl">รูปแบบที่เกิดซ้ำ (บรรทัดละข้อ สูงสุด 5 ข้อ)</label><textarea class="fi" id="ed-pat" rows="7" style="resize:vertical;line-height:1.5;">${acEsc((E.patterns || []).join('\n'))}</textarea></div>
+    <div class="section-label" style="margin-top:4px;">รูปแบบที่เกิดซ้ำ</div>
+    ${patEd}
     ${hz}
     <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:6px;">
       <button class="btn-prim" id="an-pub" onclick="anPublish()">📢 เผยแพร่ให้พนักงาน</button>
@@ -2229,13 +2259,23 @@ async function anPublish() {
     cl.sort((a, b) => AN_LEVELS.indexOf(a.level) - AN_LEVELS.indexOf(b.level));
     return { type: h.type || null, title: h.title, why: h.why, lessons: h.lessons, controls: (cl[0] && cl[0].level) || h.controls || null, control_levels: cl };
   });
+  const pats = []; let patBad = false;
+  (E.patterns || []).forEach(p => {
+    const q = anNormPat(p); if (q.hide) return;
+    if (!q.title && q.text !== undefined) { const t = String(q.text).trim(); if (t) pats.push(t); return; }
+    const o = { title: String(q.title || '').trim() };
+    if (!o.title) { patBad = true; return; }
+    ['where', 'basis', 'assumption'].forEach(k => { const v = String(q[k] || '').trim(); if (v) o[k] = v; });
+    pats.push(o);
+  });
+  if (patBad) { msg.innerHTML = '<span style="color:var(--red)">ทุกรูปแบบที่เผยแพร่ต้องมีหัวข้อ</span>'; return; }
   if (!hz.length) { msg.innerHTML = '<span style="color:var(--red)">ต้องมีจุดเสี่ยงที่เผยแพร่อย่างน้อย 1 จุด</span>'; return; }
   if (hz.some(h => !h.title)) { msg.innerHTML = '<span style="color:var(--red)">ทุกจุดเสี่ยงต้องมีชื่อ</span>'; return; }
   if (!confirm(`เผยแพร่ ${hz.length} จุดเสี่ยงให้พนักงานทุกคนเห็นทันที ใช่หรือไม่?`)) return;
   btn.disabled = true; msg.textContent = '⏳ กำลังเผยแพร่...';
   try {
     const res = await fetch(`${SB_URL}/rest/v1/rpc/accident_publish_synthesis`, { method: 'POST', headers: sbHeaders,
-      body: JSON.stringify({ p_emp_code: AN.code, p_password: AN.pw, p_content: { patterns: E.patterns, hazards: hz } }) });
+      body: JSON.stringify({ p_emp_code: AN.code, p_password: AN.pw, p_content: { patterns: pats, hazards: hz } }) });
     const j = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(j.message === 'unauthorized' ? 'ไม่มีสิทธิ์เผยแพร่' : (j.message || `เซิร์ฟเวอร์ตอบ ${res.status}`));
     await anLoadSyn();
